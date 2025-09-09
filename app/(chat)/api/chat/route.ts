@@ -51,7 +51,7 @@ export function getStreamContext() {
         waitUntil: after,
       });
     } catch (error: any) {
-      if (error.message.includes('REDIS_URL') || error.message.includes('STORAGE_2_REDIS_URL')) {
+      if (error.message.includes('REDIS_URL')) {
         console.log(
           ' > Resumable streams are disabled due to missing REDIS_URL',
         );
@@ -128,21 +128,27 @@ export async function POST(request: Request) {
 
     const { longitude, latitude, city, country } = geolocation(request);
 
-    const profileRaw = await getUserProfileByUserId({ userId: session.user.id });
-    const profile = profileRaw
-      ? {
-          interests: Array.isArray(profileRaw.interests)
-            ? (profileRaw.interests as Array<{ category: string; topics: string[] }>)
-            : null,
-          goals: Array.isArray(profileRaw.goals)
-            ? (profileRaw.goals as string[])
-            : null,
-          timeBudgetMins:
-            typeof profileRaw.timeBudgetMins === 'number'
-              ? profileRaw.timeBudgetMins
+    // Gracefully handle profile fetch - if table doesn't exist, continue without profile
+    let profile = null;
+    try {
+      const profileRaw = await getUserProfileByUserId({ userId: session.user.id });
+      profile = profileRaw
+        ? {
+            interests: Array.isArray(profileRaw.interests)
+              ? (profileRaw.interests as Array<{ category: string; topics: string[] }>)
               : null,
-        }
-      : null;
+            goals: Array.isArray(profileRaw.goals)
+              ? (profileRaw.goals as string[])
+              : null,
+            timeBudgetMins:
+              typeof profileRaw.timeBudgetMins === 'number'
+                ? profileRaw.timeBudgetMins
+                : null,
+          }
+        : null;
+    } catch (error) {
+      console.warn('Failed to fetch user profile for chat, continuing without profile:', error);
+    }
 
     const requestHints: RequestHints = {
       longitude,

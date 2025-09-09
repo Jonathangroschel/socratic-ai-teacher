@@ -9,7 +9,6 @@ config({
 
 const runMigrate = async () => {
   const DB_URL =
-    process.env.STORAGE_2_POSTGRES_URL ||
     process.env.POSTGRES_URL ||
     process.env.DATABASE_URL ||
     process.env.SUPABASE_DB_URL;
@@ -25,10 +24,14 @@ const runMigrate = async () => {
   console.log('⏳ Running migrations...');
 
   const start = Date.now();
-  await migrate(db, { migrationsFolder: './lib/db/migrations' });
-  const end = Date.now();
-
-  console.log('✅ Migrations completed in', end - start, 'ms');
+  try {
+    await migrate(db, { migrationsFolder: './lib/db/migrations' });
+    const end = Date.now();
+    console.log('✅ Migrations completed in', end - start, 'ms');
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    process.exit(1);
+  }
   process.exit(0);
 };
 

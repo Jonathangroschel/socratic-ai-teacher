@@ -16,7 +16,15 @@ export default async function Page() {
   }
 
   // If user hasn't completed onboarding, send them to onboarding
-  const profile = await getUserProfileByUserId({ userId: session.user.id });
+  // Gracefully handle case where UserProfile table doesn't exist yet
+  let profile = null;
+  try {
+    profile = await getUserProfileByUserId({ userId: session.user.id });
+  } catch (error) {
+    // If table doesn't exist or other DB error, treat as incomplete onboarding
+    console.warn('Failed to fetch user profile, redirecting to onboarding:', error);
+  }
+  
   if (!profile || !profile.onboardingCompleted) {
     redirect('/onboarding');
   }

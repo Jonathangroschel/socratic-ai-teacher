@@ -26,7 +26,9 @@ export async function GET() {
       : null;
     return Response.json(profile, { status: 200 });
   } catch (error) {
-    return new ChatSDKError('bad_request:api').toResponse();
+    // If table doesn't exist yet, return null profile
+    console.warn('Failed to fetch user profile:', error);
+    return Response.json(null, { status: 200 });
   }
 }
 
