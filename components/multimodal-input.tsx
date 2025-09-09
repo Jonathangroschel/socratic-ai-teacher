@@ -40,8 +40,6 @@ import type { Attachment, ChatMessage } from '@/lib/types';
 import { chatModels } from '@/lib/ai/models';
 import { saveChatModelAsCookie } from '@/app/(chat)/actions';
 import { startTransition } from 'react';
-import { getContextWindow, normalizeUsage } from 'tokenlens';
-import { Context } from './elements/context';
 import { myProvider } from '@/lib/ai/providers';
 
 function PureMultimodalInput({
@@ -189,34 +187,6 @@ function PureMultimodalInput({
     }
   };
 
-  const modelResolver = useMemo(() => {
-    return myProvider.languageModel(selectedModelId);
-  }, [selectedModelId]);
-
-  const contextMax = useMemo(() => {
-    // Resolve from selected model; stable across chunks.
-    const cw = getContextWindow(modelResolver.modelId);
-    return cw.combinedMax ?? cw.inputMax ?? 0;
-  }, [modelResolver]);
-
-  const usedTokens = useMemo(() => {
-    // Prefer explicit usage data part captured via onData
-    if (!usage) return 0; // update only when final usage arrives
-    const n = normalizeUsage(usage);
-    return typeof n.total === 'number'
-      ? n.total
-      : (n.input ?? 0) + (n.output ?? 0);
-  }, [usage]);
-
-  const contextProps = useMemo(
-    () => ({
-      maxTokens: contextMax,
-      usedTokens,
-      usage,
-      modelId: modelResolver.modelId,
-    }),
-    [contextMax, usedTokens, usage, modelResolver],
-  );
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
@@ -356,7 +326,6 @@ function PureMultimodalInput({
             rows={1}
             autoFocus
           />{' '}
-          <Context {...contextProps} />
         </div>
         <PromptInputToolbar className="px-3 py-2 !border-t-0 !border-top-0 shadow-none dark:!border-transparent dark:border-0">
           <PromptInputTools className="gap-2">
