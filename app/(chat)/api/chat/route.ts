@@ -128,7 +128,21 @@ export async function POST(request: Request) {
 
     const { longitude, latitude, city, country } = geolocation(request);
 
-    const profile = await getUserProfileByUserId({ userId: session.user.id });
+    const profileRaw = await getUserProfileByUserId({ userId: session.user.id });
+    const profile = profileRaw
+      ? {
+          interests: Array.isArray(profileRaw.interests)
+            ? (profileRaw.interests as Array<{ category: string; topics: string[] }>)
+            : null,
+          goals: Array.isArray(profileRaw.goals)
+            ? (profileRaw.goals as string[])
+            : null,
+          timeBudgetMins:
+            typeof profileRaw.timeBudgetMins === 'number'
+              ? profileRaw.timeBudgetMins
+              : null,
+        }
+      : null;
 
     const requestHints: RequestHints = {
       longitude,

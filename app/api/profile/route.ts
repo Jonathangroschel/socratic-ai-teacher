@@ -10,8 +10,21 @@ export async function GET() {
   }
 
   try {
-    const profile = await getUserProfileByUserId({ userId: session.user.id });
-    return Response.json(profile ?? null, { status: 200 });
+    const profileRaw = await getUserProfileByUserId({ userId: session.user.id });
+    const profile = profileRaw
+      ? {
+          interests: Array.isArray(profileRaw.interests)
+            ? profileRaw.interests
+            : null,
+          goals: Array.isArray(profileRaw.goals) ? profileRaw.goals : null,
+          timeBudgetMins:
+            typeof profileRaw.timeBudgetMins === 'number'
+              ? profileRaw.timeBudgetMins
+              : null,
+          onboardingCompleted: Boolean(profileRaw.onboardingCompleted),
+        }
+      : null;
+    return Response.json(profile, { status: 200 });
   } catch (error) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
@@ -25,9 +38,7 @@ export async function POST(request: Request) {
 
   try {
     const json = await request.json();
-    const parsed = SelectedInterestsSchema.extend({
-      onboardingCompleted: (value: unknown) => Boolean(value) as any,
-    }).safeParse(json);
+    const parsed = SelectedInterestsSchema.safeParse(json);
 
     if (!parsed.success) {
       return new ChatSDKError('bad_request:api').toResponse();
