@@ -6,6 +6,8 @@ import type { UseChatHelpers } from '@ai-sdk/react';
 import type { VisibilityType } from './visibility-selector';
 import type { ChatMessage } from '@/lib/types';
 import { Suggestion } from './elements/suggestion';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/utils';
 
 interface SuggestedActionsProps {
   chatId: string;
@@ -18,12 +20,26 @@ function PureSuggestedActions({
   sendMessage,
   selectedVisibilityType,
 }: SuggestedActionsProps) {
-  const suggestedActions = [
-    'What are the advantages of using Next.js?',
-    'Write code to demonstrate Dijkstra\'s algorithm',
-    'Help me write an essay about Silicon Valley',
-    'What is the weather in San Francisco?',
+  const { data: profile } = useSWR('/api/profile', fetcher);
+  const topics: string[] =
+    profile?.interests?.flatMap((c: any) => c.topics) ?? [];
+  const fallback = [
+    'Start my daily session',
+    'Teach me something useful in 20 minutes',
+    'Warm-up quiz to begin today',
+    'Review yesterday\'s concepts',
   ];
+
+  const topPicks = topics.slice(0, 6);
+  const suggestedActions =
+    topPicks.length >= 2
+      ? [
+          `Kick off with: ${topPicks[0]}`,
+          `Quick explainer then quiz on: ${topPicks[1]}`,
+          topPicks[2] ? `5-min micro-task: ${topPicks[2]}` : fallback[2],
+          fallback[0],
+        ]
+      : fallback;
 
   return (
     <div data-testid="suggested-actions" className="grid sm:grid-cols-2 gap-2 w-full">

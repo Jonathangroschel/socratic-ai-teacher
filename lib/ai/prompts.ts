@@ -138,16 +138,40 @@ About the origin of user's request:
 export const systemPrompt = ({
   selectedChatModel,
   requestHints,
+  profile,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
+  profile?: {
+    interests?: Array<{ category: string; topics: string[] }> | null;
+    goals?: string[] | null;
+    timeBudgetMins?: number | null;
+  } | null;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
+  const interestsFlat =
+    profile?.interests?.flatMap((c) => c.topics).slice(0, 15) ?? [];
+  const profileBlock = [
+    interestsFlat.length
+      ? `Learner interests to favor: ${interestsFlat.join(', ')}.`
+      : '',
+    profile?.goals && profile.goals.length
+      ? `Learner goals: ${profile.goals.join('; ')}.`
+      : '',
+    profile?.timeBudgetMins
+      ? `Target session length: ~${profile.timeBudgetMins} minutes.`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const base = `${regularPrompt}${profileBlock ? `\n\n${profileBlock}` : ''}\n\n${requestPrompt}`;
+
   if (selectedChatModel === 'chat-model-reasoning') {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+    return base;
   } else {
-    return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+    return `${base}\n\n${artifactsPrompt}`;
   }
 };
 

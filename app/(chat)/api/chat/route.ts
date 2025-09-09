@@ -18,6 +18,7 @@ import {
   saveChat,
   saveMessages,
 } from '@/lib/db/queries';
+import { getUserProfileByUserId } from '@/lib/db/queries';
 import { updateChatLastContextById } from '@/lib/db/queries';
 import { convertToUIMessages, generateUUID } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
@@ -127,6 +128,8 @@ export async function POST(request: Request) {
 
     const { longitude, latitude, city, country } = geolocation(request);
 
+    const profile = await getUserProfileByUserId({ userId: session.user.id });
+
     const requestHints: RequestHints = {
       longitude,
       latitude,
@@ -156,7 +159,7 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({ selectedChatModel, requestHints, profile }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:

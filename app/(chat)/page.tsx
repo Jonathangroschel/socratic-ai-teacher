@@ -6,12 +6,19 @@ import { generateUUID } from '@/lib/utils';
 import { DataStreamHandler } from '@/components/data-stream-handler';
 import { auth } from '../(auth)/auth';
 import { redirect } from 'next/navigation';
+import { getUserProfileByUserId } from '@/lib/db/queries';
 
 export default async function Page() {
   const session = await auth();
 
   if (!session) {
     redirect('/api/auth/guest');
+  }
+
+  // If user hasn't completed onboarding, send them to onboarding
+  const profile = await getUserProfileByUserId({ userId: session.user.id });
+  if (!profile || !profile.onboardingCompleted) {
+    redirect('/onboarding');
   }
 
   const id = generateUUID();

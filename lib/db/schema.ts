@@ -10,6 +10,7 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  integer,
 } from 'drizzle-orm/pg-core';
 import type { LanguageModelV2Usage } from '@ai-sdk/provider';
 
@@ -171,3 +172,20 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// User profile stores onboarding preferences and lightweight learning config
+export const userProfile = pgTable('UserProfile', {
+  userId: uuid('userId')
+    .primaryKey()
+    .notNull()
+    .references(() => user.id),
+  onboardingCompleted: boolean('onboardingCompleted').notNull().default(false),
+  interests: jsonb('interests'), // Array<{ category: string; topics: string[] }>
+  goals: jsonb('goals'), // string[]
+  timeBudgetMins: integer('timeBudgetMins').notNull().default(30),
+  level: varchar('level').notNull().default('beginner'),
+  createdAt: timestamp('createdAt').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+});
+
+export type UserProfile = InferSelectModel<typeof userProfile>;

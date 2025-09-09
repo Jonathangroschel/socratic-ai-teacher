@@ -27,6 +27,8 @@ import {
   type DBMessage,
   type Chat,
   stream,
+  userProfile,
+  type UserProfile,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -560,6 +562,81 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       'bad_request:database',
       'Failed to get stream ids by chat id',
+    );
+  }
+}
+
+export async function getUserProfileByUserId({
+  userId,
+}: {
+  userId: string;
+}): Promise<UserProfile | null> {
+  try {
+    const [profile] = await db
+      .select()
+      .from(userProfile)
+      .where(eq(userProfile.userId, userId))
+      .limit(1);
+
+    return profile ?? null;
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get user profile by user id',
+    );
+  }
+}
+
+export async function upsertUserProfile({
+  userId,
+  interests,
+  goals,
+  timeBudgetMins,
+  level,
+  onboardingCompleted,
+}: {
+  userId: string;
+  interests?: unknown;
+  goals?: unknown;
+  timeBudgetMins?: number;
+  level?: string;
+  onboardingCompleted?: boolean;
+}): Promise<void> {
+  try {
+    const now = new Date();
+    const [existing] = await db
+      .select({ userId: userProfile.userId })
+      .from(userProfile)
+      .where(eq(userProfile.userId, userId));
+
+    if (existing) {
+      await db
+        .update(userProfile)
+        .set({
+          interests: interests as any,
+          goals: goals as any,
+          timeBudgetMins: timeBudgetMins ?? 30,
+          level: level ?? 'beginner',
+          onboardingCompleted: onboardingCompleted ?? false,
+          updatedAt: now,
+        })
+        .where(eq(userProfile.userId, userId));
+    } else {
+      await db.insert(userProfile).values({
+        userId,
+        interests: interests as any,
+        goals: goals as any,
+        timeBudgetMins: timeBudgetMins ?? 30,
+        level: level ?? 'beginner',
+        onboardingCompleted: onboardingCompleted ?? false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to upsert user profile',
     );
   }
 }
