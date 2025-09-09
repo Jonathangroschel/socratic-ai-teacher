@@ -61,6 +61,14 @@ export async function POST(request: Request) {
 
     return Response.json({ ok: true }, { status: 200 });
   } catch (error) {
+    console.error('Profile upsert failed:', error);
+    // If it's a database error (table doesn't exist), return a more specific error
+    if (error instanceof Error && error.message.includes('relation') && error.message.includes('does not exist')) {
+      return Response.json({ 
+        error: 'Database table not ready yet. Please try again in a moment.',
+        code: 'TABLE_NOT_EXISTS'
+      }, { status: 503 });
+    }
     return new ChatSDKError('bad_request:api').toResponse();
   }
 }

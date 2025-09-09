@@ -92,7 +92,12 @@ export default function OnboardingPage() {
       } else {
         const errorData = await res.json().catch(() => ({}));
         console.error('Profile save failed:', res.status, errorData);
-        alert('Failed to save profile. Please try again.');
+        
+        if (errorData.code === 'TABLE_NOT_EXISTS') {
+          alert('Database is still setting up. Please wait a moment and try again.');
+        } else {
+          alert('Failed to save profile. Please try again.');
+        }
       }
     } catch (e) {
       console.error('Profile save error:', e);
