@@ -40,13 +40,16 @@ export async function POST(request: Request) {
 
   try {
     const json = await request.json();
+    console.log('Profile API received data:', JSON.stringify(json, null, 2));
+    
     const parsed = SelectedInterestsSchema.safeParse(json);
 
     if (!parsed.success) {
+      console.error('Profile validation failed:', parsed.error);
       return new ChatSDKError('bad_request:api').toResponse();
     }
 
-    const { interests, goals, timeBudgetMins } = parsed.data as any;
+    const { interests, goals, timeBudgetMins } = parsed.data;
 
     await upsertUserProfile({
       userId: session.user.id,

@@ -88,8 +88,8 @@ export const SelectedInterestsSchema = z.object({
       }),
     )
     .min(1),
-  goals: z.array(z.string()).min(0).max(10).optional(),
-  timeBudgetMins: z.number().int().min(15).max(60).optional(),
+  goals: z.array(z.string()).optional().default([]),
+  timeBudgetMins: z.number().int().min(15).max(60).optional().default(30),
 });
 
 

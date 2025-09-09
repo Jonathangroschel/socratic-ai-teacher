@@ -70,10 +70,18 @@ export default function OnboardingPage() {
         .map((g) => g.trim())
         .filter(Boolean);
 
+      const payload = { 
+        interests, 
+        goals: goalsArray, 
+        timeBudgetMins: timeBudget 
+      };
+      
+      console.log('Sending profile data:', payload);
+
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interests, goals: goalsArray, timeBudgetMins: timeBudget }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -81,9 +89,14 @@ export default function OnboardingPage() {
         localStorage.removeItem('onboarding:goals');
         localStorage.removeItem('onboarding:time');
         router.replace('/');
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Profile save failed:', res.status, errorData);
+        alert('Failed to save profile. Please try again.');
       }
     } catch (e) {
-      // best-effort; keep minimal
+      console.error('Profile save error:', e);
+      alert('Failed to save profile. Please try again.');
     } finally {
       setSaving(false);
     }
