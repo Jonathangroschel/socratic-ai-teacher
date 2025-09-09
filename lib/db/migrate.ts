@@ -9,6 +9,7 @@ config({
 
 const runMigrate = async () => {
   const DB_URL =
+    process.env.STORAGE_2_POSTGRES_URL ||
     process.env.POSTGRES_URL ||
     process.env.DATABASE_URL ||
     process.env.SUPABASE_DB_URL;
