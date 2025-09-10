@@ -34,34 +34,15 @@ export default async function Page() {
 
   const id = generateUUID();
 
-  const cookieStore = await cookies();
-  const modelIdFromCookie = cookieStore.get('chat-model');
-
-  if (!modelIdFromCookie) {
-    return (
-      <>
-        <Chat
-          key={id}
-          id={id}
-          initialMessages={[]}
-          initialChatModel={DEFAULT_CHAT_MODEL}
-          initialVisibilityType="private"
-          isReadonly={false}
-          session={session}
-          autoResume={false}
-        />
-        <DataStreamHandler />
-      </>
-    );
-  }
-
+  // Always use the default chat model for the product experience.
+  // We intentionally ignore any previously stored model selection.
   return (
     <>
       <Chat
         key={id}
         id={id}
         initialMessages={[]}
-        initialChatModel={modelIdFromCookie.value}
+        initialChatModel={DEFAULT_CHAT_MODEL}
         initialVisibilityType="private"
         isReadonly={false}
         session={session}
