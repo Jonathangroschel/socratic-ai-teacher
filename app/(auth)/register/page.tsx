@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 
 import { AuthForm } from '@/components/auth-form';
 import { SubmitButton } from '@/components/submit-button';
@@ -26,6 +26,8 @@ export default function Page() {
 
   const { update: updateSession } = useSession();
 
+  const didNavigateRef = useRef(false);
+
   useEffect(() => {
     if (state.status === 'user_exists') {
       toast({ type: 'error', description: 'Account already exists!' });
@@ -36,15 +38,16 @@ export default function Page() {
         type: 'error',
         description: 'Failed validating your submission!',
       });
-    } else if (state.status === 'success') {
+    } else if (state.status === 'success' && !didNavigateRef.current) {
       toast({ type: 'success', description: 'Account created successfully!' });
 
       setIsSuccessful(true);
       updateSession();
       // Redirect to the chat page instead of just refreshing
+      didNavigateRef.current = true;
       router.push('/');
     }
-  }, [state, router, updateSession]);
+  }, [state.status, router, updateSession]);
 
   const handleSubmit = (formData: FormData) => {
     setEmail(formData.get('email') as string);
