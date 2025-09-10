@@ -82,6 +82,7 @@ export default function OnboardingPage() {
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
@@ -96,7 +97,7 @@ export default function OnboardingPage() {
         let verified = false;
         for (let attempt = 0; attempt < 5; attempt++) {
           try {
-            const verifyRes = await fetch('/api/profile', { cache: 'no-store' });
+            const verifyRes = await fetch('/api/profile', { cache: 'no-store', credentials: 'include' });
             if (verifyRes.ok) {
               const profile = await verifyRes.json();
               console.log('Profile verification attempt', attempt + 1, profile);
@@ -118,7 +119,8 @@ export default function OnboardingPage() {
           console.warn('Profile not verified after polling; proceeding with navigation');
         }
 
-        router.replace('/');
+        // Use a full page navigation to avoid any SPA navigation issues on Safari
+        window.location.replace('/');
       } else {
         const errorData = await res.json().catch(() => ({}));
         console.error('Profile save failed:', res.status, errorData);
