@@ -72,12 +72,14 @@ export function Chat({
       api: '/api/chat',
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest({ messages, id, body }) {
+        const clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         return {
           body: {
             id,
             message: messages.at(-1),
             selectedChatModel: initialChatModel,
             selectedVisibilityType: visibilityType,
+            clientTimeZone,
             ...body,
           },
         };

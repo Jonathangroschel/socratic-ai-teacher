@@ -132,7 +132,26 @@ export interface RequestHints {
   longitude: Geo['longitude'];
   city: Geo['city'];
   country: Geo['country'];
+  timeZone?: string | null;
 }
+
+const formatLocalTime = (timeZone?: string | null) => {
+  try {
+    if (!timeZone) return 'unknown';
+    return new Date().toLocaleString('en-US', {
+      timeZone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch (_) {
+    return 'unknown';
+  }
+};
 
 export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
 About the origin of user's request:
@@ -140,6 +159,7 @@ About the origin of user's request:
 - lon: ${requestHints.longitude}
 - city: ${requestHints.city}
 - country: ${requestHints.country}
+- localTime: ${formatLocalTime(requestHints.timeZone)}${requestHints.timeZone ? ` (tz: ${requestHints.timeZone})` : ''}
 `;
 
 export const systemPrompt = ({

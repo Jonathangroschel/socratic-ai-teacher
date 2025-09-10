@@ -80,11 +80,13 @@ export async function POST(request: Request) {
       message,
       selectedChatModel,
       selectedVisibilityType,
+      clientTimeZone,
     }: {
       id: string;
       message: ChatMessage;
       selectedChatModel: ChatModel['id'];
       selectedVisibilityType: VisibilityType;
+      clientTimeZone?: string;
     } = requestBody;
 
     const session = await auth();
@@ -127,6 +129,9 @@ export async function POST(request: Request) {
     const uiMessages = [...convertToUIMessages(messagesFromDb), message];
 
     const { longitude, latitude, city, country } = geolocation(request);
+    // Prefer Vercel-provided timezone header, then client-provided, else null
+    const headerTimeZone = request.headers.get('x-vercel-ip-timezone');
+    const timeZone = headerTimeZone || clientTimeZone || null;
 
     // Gracefully handle profile fetch - if table doesn't exist, continue without profile
     let profile = null;
@@ -155,6 +160,7 @@ export async function POST(request: Request) {
       latitude,
       city,
       country,
+      timeZone,
     };
 
     await saveMessages({
