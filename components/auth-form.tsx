@@ -1,4 +1,5 @@
 import Form from 'next/form';
+import { useEffect, useState } from 'react';
 
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -14,6 +15,13 @@ export function AuthForm({
   children: React.ReactNode;
   defaultEmail?: string;
 }) {
+  const [cookieHeader, setCookieHeader] = useState('');
+  
+  // Get the cookie header when the component mounts
+  useEffect(() => {
+    setCookieHeader(document.cookie);
+  }, []);
+  
   return (
     <Form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
       <div className="flex flex-col gap-2">
@@ -53,6 +61,9 @@ export function AuthForm({
           required
         />
       </div>
+      
+      {/* Hidden input to pass cookie header to server action */}
+      <input type="hidden" name="cookie-header" value={cookieHeader} />
 
       {children}
     </Form>

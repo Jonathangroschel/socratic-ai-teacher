@@ -640,3 +640,55 @@ export async function upsertUserProfile({
     );
   }
 }
+
+/**
+ * Transfer profile data from a guest user to a regular user
+ * Used when a guest user creates a regular account
+ */
+export async function transferGuestProfileToUser({
+  guestEmail,
+  newUserId,
+}: {
+  guestEmail: string;
+  newUserId: string;
+}): Promise<void> {
+  try {
+    // Find the guest user
+    const guestUsers = await db.select().from(user).where(eq(user.email, guestEmail));
+    
+    if (guestUsers.length === 0) {
+      console.log('No guest user found with email:', guestEmail);
+      return;
+    }
+    
+    const guestUser = guestUsers[0];
+    
+    // Find the guest profile
+    const guestProfile = await getUserProfileByUserId({ userId: guestUser.id });
+    
+    if (!guestProfile) {
+      console.log('No profile found for guest user:', guestUser.id);
+      return;
+    }
+    
+    console.log('Found guest profile, transferring to new user:', newUserId);
+    
+    // Transfer the profile data to the new user
+    await upsertUserProfile({
+      userId: newUserId,
+      interests: guestProfile.interests,
+      goals: guestProfile.goals,
+      timeBudgetMins: guestProfile.timeBudgetMins,
+      level: guestProfile.level,
+      onboardingCompleted: true, // Ensure onboarding is marked as completed
+    });
+    
+    console.log('Profile data transferred successfully');
+  } catch (error) {
+    console.error('Failed to transfer guest profile:', error);
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to transfer guest profile data',
+    );
+  }
+}

@@ -2,7 +2,8 @@
 
 import { z } from 'zod';
 
-import { createUser, getUser } from '@/lib/db/queries';
+import { createUser, getUser, transferGuestProfileToUser } from '@/lib/db/queries';
+import { guestRegex } from '@/lib/constants';
 
 import { signIn } from './auth';
 
@@ -28,7 +29,8 @@ export const login = async (
     await signIn('credentials', {
       email: validatedData.email,
       password: validatedData.password,
-      redirect: false,
+      redirect: true,
+      redirectTo: '/',
     });
 
     return { status: 'success' };
@@ -61,16 +63,42 @@ export const register = async (
       password: formData.get('password'),
     });
 
-    const [user] = await getUser(validatedData.email);
-
-    if (user) {
+    // Get the current session token from the cookie
+    const cookieHeader = formData.get('cookie-header') as string;
+    const guestEmail = cookieHeader ? extractGuestEmail(cookieHeader) : null;
+    
+    // Check if the email is already registered
+    const [existingUser] = await getUser(validatedData.email);
+    if (existingUser) {
       return { status: 'user_exists' } as RegisterActionState;
     }
+    
+    // Create the new user
     await createUser(validatedData.email, validatedData.password);
+    // Get the newly created user to get the ID
+    const [newUser] = await getUser(validatedData.email);
+    const newUserId = newUser?.id;
+    
+    // If we have a guest email and a new user ID, try to transfer profile data
+    if (guestEmail && newUserId) {
+      console.log('Attempting to transfer profile from guest:', guestEmail, 'to new user:', newUserId);
+      try {
+        await transferGuestProfileToUser({
+          guestEmail,
+          newUserId,
+        });
+      } catch (transferError) {
+        console.error('Error transferring profile:', transferError);
+        // Continue with sign-in even if transfer fails
+      }
+    }
+    
+    // Sign in with the new credentials
     await signIn('credentials', {
       email: validatedData.email,
       password: validatedData.password,
-      redirect: false,
+      redirect: true,
+      redirectTo: '/',
     });
 
     return { status: 'success' };
@@ -78,7 +106,33 @@ export const register = async (
     if (error instanceof z.ZodError) {
       return { status: 'invalid_data' };
     }
-
+    console.error('Registration error:', error);
     return { status: 'failed' };
   }
 };
+
+// Helper function to extract guest email from cookie header
+function extractGuestEmail(cookieHeader: string): string | null {
+  try {
+    // Find the next-auth.session-token cookie
+    const sessionMatch = cookieHeader.match(/next-auth\.session-token=([^;]+)/);
+    if (!sessionMatch) return null;
+    
+    // Decode the JWT token (simplified approach)
+    const token = sessionMatch[1];
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    
+    const decodedPayload = JSON.parse(Buffer.from(payload, 'base64').toString());
+    const email = decodedPayload.email;
+    
+    // Check if it's a guest email
+    if (email && guestRegex.test(email)) {
+      return email;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error extracting guest email:', error);
+    return null;
+  }
+}
