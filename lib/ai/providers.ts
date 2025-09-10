@@ -25,12 +25,12 @@ export const myProvider = isTestEnvironment
     })()
   : customProvider({
       languageModels: {
-        'chat-model': gateway.languageModel('openai/gpt-5-nano'),
+        'chat-model': gateway.languageModel('openai/gpt-4.1'),
         'chat-model-reasoning': wrapLanguageModel({
-          model: gateway.languageModel('openai/gpt-5-nano'),
+          model: gateway.languageModel('openai/gpt-4.1'),
           middleware: extractReasoningMiddleware({ tagName: 'think' }),
         }),
-        'title-model': gateway.languageModel('openai/gpt-5-nano'),
-        'artifact-model': gateway.languageModel('openai/gpt-5-nano'),
+        'title-model': gateway.languageModel('openai/gpt-4.1'),
+        'artifact-model': gateway.languageModel('openai/gpt-4.1'),
       },
     });
