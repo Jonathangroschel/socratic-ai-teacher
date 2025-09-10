@@ -186,10 +186,13 @@ export async function POST(request: Request) {
     let memoryBlock = '';
     if (mem0 && session?.user?.id) {
       try {
-        const results = await mem0.search('progress, last session, weaknesses, next steps', {
-          user_id: session.user.id,
-          categories: ['learning_progress'],
-        } as any);
+        const results = await mem0.search(
+          'progress OR last session OR weaknesses OR next steps',
+          {
+            user_id: session.user.id,
+            top_k: 5,
+          } as any,
+        );
         const top = Array.isArray(results)
           ? results.slice(0, 3).map((r: any) => `- ${r?.content ?? ''}`).join('\n')
           : '';
