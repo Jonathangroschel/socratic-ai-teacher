@@ -11,6 +11,19 @@ export async function GET() {
 
   try {
     const profileRaw = await getUserProfileByUserId({ userId: session.user.id });
+    
+    // If profile exists but onboardingCompleted is false, fix it
+    if (profileRaw && !profileRaw.onboardingCompleted) {
+      console.log('Fixing existing profile - setting onboardingCompleted to true');
+      await upsertUserProfile({
+        userId: session.user.id,
+        interests: profileRaw.interests,
+        goals: profileRaw.goals,
+        timeBudgetMins: profileRaw.timeBudgetMins,
+        onboardingCompleted: true,
+      });
+    }
+    
     const profile = profileRaw
       ? {
           interests: Array.isArray(profileRaw.interests)
@@ -21,7 +34,7 @@ export async function GET() {
             typeof profileRaw.timeBudgetMins === 'number'
               ? profileRaw.timeBudgetMins
               : null,
-          onboardingCompleted: Boolean(profileRaw.onboardingCompleted),
+          onboardingCompleted: true, // Always true if profile exists
         }
       : null;
     return Response.json(profile, { status: 200 });

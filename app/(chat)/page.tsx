@@ -20,12 +20,15 @@ export default async function Page() {
   let profile = null;
   try {
     profile = await getUserProfileByUserId({ userId: session.user.id });
+    console.log('Profile found:', profile);
+    console.log('Onboarding completed:', profile?.onboardingCompleted);
   } catch (error) {
     // If table doesn't exist or other DB error, treat as incomplete onboarding
     console.warn('Failed to fetch user profile, redirecting to onboarding:', error);
   }
   
   if (!profile || !profile.onboardingCompleted) {
+    console.log('Redirecting to onboarding - profile:', !!profile, 'onboardingCompleted:', profile?.onboardingCompleted);
     redirect('/onboarding');
   }
 
