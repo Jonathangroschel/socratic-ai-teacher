@@ -40,7 +40,8 @@ export default function Page() {
     } else if (state.status === 'success') {
       setIsSuccessful(true);
       updateSession();
-      router.refresh();
+      // Redirect to the chat page instead of just refreshing
+      router.push('/');
     }
   }, [state.status, router, updateSession]);
 

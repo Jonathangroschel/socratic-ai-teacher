@@ -41,7 +41,8 @@ export default function Page() {
 
       setIsSuccessful(true);
       updateSession();
-      router.refresh();
+      // Redirect to the chat page instead of just refreshing
+      router.push('/');
     }
   }, [state, router, updateSession]);
 
