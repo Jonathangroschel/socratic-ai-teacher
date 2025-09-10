@@ -682,6 +682,41 @@ export async function transferUserProfileByUserId({
 }
 
 /**
+ * Transfer chats, documents, and suggestions from one user id to another.
+ */
+export async function transferUserContentByUserId({
+  fromUserId,
+  toUserId,
+}: {
+  fromUserId: string;
+  toUserId: string;
+}): Promise<void> {
+  try {
+    if (fromUserId === toUserId) return;
+
+    // Move chats ownership
+    await db.update(chat).set({ userId: toUserId }).where(eq(chat.userId, fromUserId));
+
+    // Move documents ownership
+    await db
+      .update(document)
+      .set({ userId: toUserId })
+      .where(eq(document.userId, fromUserId));
+
+    // Move suggestions ownership
+    await db
+      .update(suggestion)
+      .set({ userId: toUserId })
+      .where(eq(suggestion.userId, fromUserId));
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to transfer user content by id',
+    );
+  }
+}
+
+/**
  * Transfer profile data from a guest user to a regular user
  * Used when a guest user creates a regular account
  */
