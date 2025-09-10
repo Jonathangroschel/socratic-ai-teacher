@@ -30,6 +30,7 @@ import { myProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
+import { mem0 } from '@/lib/memory/mem0';
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -181,11 +182,30 @@ export async function POST(request: Request) {
 
     let finalUsage: LanguageModelUsage | undefined;
 
+    // Retrieve recent learning memory to inject as brief context
+    let memoryBlock = '';
+    if (mem0 && session?.user?.id) {
+      try {
+        const results = await mem0.search('progress, last session, weaknesses, next steps', {
+          user_id: session.user.id,
+          categories: ['learning_progress'],
+        } as any);
+        const top = Array.isArray(results)
+          ? results.slice(0, 3).map((r: any) => `- ${r?.content ?? ''}`).join('\n')
+          : '';
+        if (top && top.trim()) {
+          memoryBlock = `\n\nRecent learning memory (summarized):\n${top}`;
+        }
+      } catch (err) {
+        console.warn('mem0.search failed', err);
+      }
+    }
+
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints, profile }),
+          system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.`,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -244,6 +264,40 @@ export async function POST(request: Request) {
             });
           } catch (err) {
             console.warn('Unable to persist last usage for chat', id, err);
+          }
+        }
+
+        // Best-effort: store a concise learning memory
+        if (mem0 && session?.user?.id) {
+          try {
+            const userText = message.parts
+              .map((p) => (p.type === 'text' ? p.text : ''))
+              .filter(Boolean)
+              .join('\n')
+              .trim();
+
+            const assistantText = messages
+              .filter((m) => m.role === 'assistant')
+              .at(-1)?.parts
+              ?.map((p) => (p.type === 'text' ? p.text : ''))
+              .filter(Boolean)
+              .join('\n')
+              .trim() ?? '';
+
+            const payload = [
+              userText ? { role: 'user', content: userText } : null,
+              assistantText ? { role: 'assistant', content: assistantText } : null,
+            ].filter(Boolean) as Array<{ role: 'user' | 'assistant'; content: string }>;
+
+            if (payload.length > 0) {
+              await mem0.add(payload as any, {
+                user_id: session.user.id,
+                metadata: { category: 'learning_progress' },
+                async_mode: true,
+              });
+            }
+          } catch (err) {
+            console.warn('mem0.add failed', err);
           }
         }
       },
