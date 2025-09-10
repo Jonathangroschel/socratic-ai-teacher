@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { toast } from '@/components/toast';
 
 import { AuthForm } from '@/components/auth-form';
@@ -26,6 +26,8 @@ export default function Page() {
 
   const { update: updateSession } = useSession();
 
+  const didNavigateRef = useRef(false);
+
   useEffect(() => {
     if (state.status === 'failed') {
       toast({
@@ -37,10 +39,11 @@ export default function Page() {
         type: 'error',
         description: 'Failed validating your submission!',
       });
-    } else if (state.status === 'success') {
+    } else if (state.status === 'success' && !didNavigateRef.current) {
       setIsSuccessful(true);
       updateSession();
       // Redirect to the chat page instead of just refreshing
+      didNavigateRef.current = true;
       router.push('/');
     }
   }, [state.status, router, updateSession]);
