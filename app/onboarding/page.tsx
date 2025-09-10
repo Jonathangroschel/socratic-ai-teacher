@@ -86,10 +86,38 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
-        console.log('Profile saved successfully, redirecting to home');
+        console.log('Profile saved successfully, verifying profile before redirect');
+        // Remove client caches immediately
         localStorage.removeItem('onboarding:selected');
         localStorage.removeItem('onboarding:goals');
         localStorage.removeItem('onboarding:time');
+
+        // Poll the profile endpoint to ensure the server recognizes onboardingCompleted
+        let verified = false;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try {
+            const verifyRes = await fetch('/api/profile', { cache: 'no-store' });
+            if (verifyRes.ok) {
+              const profile = await verifyRes.json();
+              console.log('Profile verification attempt', attempt + 1, profile);
+              if (profile && profile.onboardingCompleted) {
+                verified = true;
+                break;
+              }
+            } else {
+              console.warn('Profile verification failed with status', verifyRes.status);
+            }
+          } catch (e) {
+            console.warn('Profile verification error', e);
+          }
+          // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+          await new Promise((r) => setTimeout(r, 100 * Math.pow(2, attempt)));
+        }
+
+        if (!verified) {
+          console.warn('Profile not verified after polling; proceeding with navigation');
+        }
+
         router.replace('/');
       } else {
         const errorData = await res.json().catch(() => ({}));
