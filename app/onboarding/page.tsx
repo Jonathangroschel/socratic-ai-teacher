@@ -60,6 +60,7 @@ export default function OnboardingPage() {
   }
 
   async function finish() {
+    console.log('Finish function called');
     setSaving(true);
     try {
       const interests = Object.entries(selected)
@@ -85,6 +86,7 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
+        console.log('Profile saved successfully, redirecting to home');
         localStorage.removeItem('onboarding:selected');
         localStorage.removeItem('onboarding:goals');
         localStorage.removeItem('onboarding:time');
@@ -214,7 +216,7 @@ export default function OnboardingPage() {
               <Button variant="outline" onClick={() => setStep(2)}>
                 Back
               </Button>
-              <Button disabled={saving} onClick={finish}>
+              <Button disabled={saving} onClick={finish} type="button">
                 {saving ? 'Saving…' : 'Start learning'}
               </Button>
             </div>
