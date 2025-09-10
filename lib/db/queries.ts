@@ -642,6 +642,46 @@ export async function upsertUserProfile({
 }
 
 /**
+ * Transfer profile data from one user id to another.
+ * Useful when converting a guest account to a registered account.
+ */
+export async function transferUserProfileByUserId({
+  fromUserId,
+  toUserId,
+}: {
+  fromUserId: string;
+  toUserId: string;
+}): Promise<void> {
+  try {
+    if (fromUserId === toUserId) return;
+
+    const [sourceProfile] = await db
+      .select()
+      .from(userProfile)
+      .where(eq(userProfile.userId, fromUserId))
+      .limit(1);
+
+    if (!sourceProfile) {
+      return;
+    }
+
+    await upsertUserProfile({
+      userId: toUserId,
+      interests: sourceProfile.interests,
+      goals: sourceProfile.goals,
+      timeBudgetMins: sourceProfile.timeBudgetMins,
+      level: sourceProfile.level,
+      onboardingCompleted: true,
+    });
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to transfer user profile by id',
+    );
+  }
+}
+
+/**
  * Transfer profile data from a guest user to a regular user
  * Used when a guest user creates a regular account
  */
