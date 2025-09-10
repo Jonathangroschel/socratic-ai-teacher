@@ -72,6 +72,15 @@ export function SidebarUserNav({ user }: { user: User }) {
             className="w-[--radix-popper-anchor-width]"
           >
             <DropdownMenuItem
+              data-testid="user-nav-item-preferences"
+              className="cursor-pointer"
+              onSelect={() => {
+                router.push('/preferences');
+              }}
+            >
+              Learning preferences
+            </DropdownMenuItem>
+            <DropdownMenuItem
               data-testid="user-nav-item-theme"
               className="cursor-pointer"
               onSelect={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
