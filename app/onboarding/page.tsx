@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -143,13 +144,25 @@ export default function OnboardingPage() {
     <div className="min-h-dvh flex items-center justify-center px-4">
       <div className="w-full max-w-3xl flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <div className="text-2xl font-semibold">Socratic setup</div>
+          <div className="text-2xl font-semibold">Polymatic setup</div>
           <div className="h-2 w-32 bg-muted rounded">
             <div
               className="h-2 bg-foreground rounded"
               style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Already a lifelong learner?{' '}
+            <Link
+              href="/login"
+              className="font-medium underline underline-offset-4 hover:text-foreground"
+            >
+              Log in here
+            </Link>
+          </p>
         </div>
 
         {step === 1 && (
