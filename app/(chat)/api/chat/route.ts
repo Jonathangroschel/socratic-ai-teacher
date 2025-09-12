@@ -236,36 +236,6 @@ export async function POST(request: Request) {
           onFinish: async ({ usage }) => {
             finalUsage = usage;
             dataStream.write({ type: 'data-usage', data: usage });
-
-            // Reward evaluation (best-effort, synchronous for immediate UI update)
-            try {
-              const userText = message.parts
-                .map((p) => (p.type === 'text' ? p.text : ''))
-                .filter(Boolean)
-                .join('\n')
-                .trim();
-
-              const reward = await evaluateAndReward({
-                userId: session.user.id,
-                chatId: id,
-                messageId: message.id,
-                userText,
-                assistantText: '',
-              });
-
-              if (reward && reward.delta && reward.delta > 0) {
-                dataStream.write({
-                  type: 'data-reward',
-                  data: {
-                    delta: reward.delta,
-                    todayTotal: reward.todayTotal,
-                    lifetimeTotal: reward.lifetimeTotal,
-                  },
-                });
-              }
-            } catch (err) {
-              console.warn('reward emit failed', err);
-            }
           },
         });
 
@@ -333,6 +303,33 @@ export async function POST(request: Request) {
           } catch (err) {
             console.warn('mem0.add failed', err);
           }
+        }
+
+        // Evaluate and persist rewards after the full assistant message is available
+        try {
+          const userText = message.parts
+            .map((p) => (p.type === 'text' ? p.text : ''))
+            .filter(Boolean)
+            .join('\n')
+            .trim();
+
+          const assistantText = messages
+            .filter((m) => m.role === 'assistant')
+            .at(-1)?.parts
+            ?.map((p) => (p.type === 'text' ? p.text : ''))
+            .filter(Boolean)
+            .join('\n')
+            .trim() ?? '';
+
+          await evaluateAndReward({
+            userId: session.user.id,
+            chatId: id,
+            messageId: messages.at(-1)?.id ?? undefined,
+            userText,
+            assistantText,
+          });
+        } catch (err) {
+          console.warn('reward evaluation failed', err);
         }
       },
       onError: () => {
