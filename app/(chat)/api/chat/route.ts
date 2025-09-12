@@ -211,6 +211,7 @@ export async function POST(request: Request) {
         uiWriter = dataStream;
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
+          temperature: 0.7,
           system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.`,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
