@@ -51,6 +51,17 @@ export function RewardsBadge() {
         setBump(true);
         const t = setTimeout(() => setBump(false), 450);
         return () => clearTimeout(t);
+      } else if (part.type === 'data-usage') {
+        // Fallback: after every assistant finish, refresh summary once
+        (async () => {
+          try {
+            const res = await fetch('/api/rewards/summary', { cache: 'no-store' });
+            if (res.ok) {
+              const json = await res.json();
+              if (typeof json?.today === 'number') setTodayTotal(json.today);
+            }
+          } catch {}
+        })();
       }
     });
   }, [dataStream]);
