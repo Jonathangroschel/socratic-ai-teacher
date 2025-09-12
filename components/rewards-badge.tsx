@@ -66,12 +66,15 @@ export function RewardsBadge() {
     });
   }, [dataStream]);
 
+  const formatNumber = (n: number) =>
+    new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Link
           href="/rewards"
-          aria-label={`Today's earnings: ${todayTotal}`}
+          aria-label={"Today's Earnings"}
           className={
             'ml-auto order-3 flex items-center gap-1 rounded-md px-2 py-1 transition ' +
             (bump ? 'bg-primary/5 ring-1 ring-primary/20 shadow-sm' : 'hover:bg-muted')
@@ -87,11 +90,11 @@ export function RewardsBadge() {
             data-testid="rewards-today"
             className="text-sm font-medium tabular-nums"
           >
-            {todayTotal}
+            {formatNumber(todayTotal)}
           </span>
         </Link>
       </TooltipTrigger>
-      <TooltipContent align="end">Today&apos;s earnings: {todayTotal}</TooltipContent>
+      <TooltipContent align="end">Today&apos;s Earnings</TooltipContent>
     </Tooltip>
   );
 }
