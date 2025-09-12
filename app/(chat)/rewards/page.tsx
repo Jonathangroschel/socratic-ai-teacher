@@ -32,7 +32,7 @@ export default function RewardsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8">
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
-        <Card className="col-span-2">
+        <Card className="col-span-2 w-full">
           <CardHeader className="flex items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings</CardTitle>
           </CardHeader>
@@ -52,7 +52,7 @@ export default function RewardsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader className="space-y-0">
             <CardTitle className="text-base">Status</CardTitle>
           </CardHeader>
@@ -68,7 +68,7 @@ export default function RewardsPage() {
       </div>
 
       <div className="hidden md:block">
-        <Card>
+        <Card className="w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings Statistics</CardTitle>
           </CardHeader>
