@@ -22,11 +22,13 @@ import { useRouter } from 'next/navigation';
 import { toast } from './toast';
 import { LoaderIcon } from './icons';
 import { guestRegex } from '@/lib/constants';
+import { useSidebar } from '@/components/ui/sidebar';
 
 export function SidebarUserNav({ user }: { user: User }) {
   const router = useRouter();
   const { data, status } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
 
   const isGuest = guestRegex.test(data?.user?.email ?? '');
 
@@ -76,6 +78,12 @@ export function SidebarUserNav({ user }: { user: User }) {
               className="cursor-pointer"
               onSelect={() => {
                 router.push('/rewards');
+                // Collapse/close sidebar after navigating
+                if (isMobile) {
+                  setOpenMobile(false);
+                } else {
+                  setOpen(false);
+                }
               }}
             >
               Dashboard
