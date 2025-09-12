@@ -31,20 +31,10 @@ export default function RewardsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8">
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
         <Card className="col-span-2">
-          <CardHeader className="flex flex-wrap items-center justify-between gap-2 space-y-0">
+          <CardHeader className="flex items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings</CardTitle>
-            <div className="flex items-center gap-2">
-              <Link href="/" className="inline-flex">
-                <Button variant="outline" className="h-8 rounded-md px-3 text-sm">
-                  Back to Chat
-                </Button>
-              </Link>
-              <Button variant="default" className="h-8 rounded-md px-3 text-sm">
-                Connect Wallet
-              </Button>
-            </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="rounded-md border bg-muted/25 p-4">
@@ -70,21 +60,32 @@ export default function RewardsPage() {
             <div className="text-sm text-muted-foreground">
               Wallet not connected. You can connect it later.
             </div>
+            <div className="mt-3">
+              <Button className="h-8 rounded-md px-3 text-sm">Connect Wallet</Button>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Earnings Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RewardsBarChart series={series} />
-          <div className="mt-2 text-xs text-muted-foreground">
-            Last 30 days. Hover bars to view day totals.
-          </div>
-        </CardContent>
-      </Card>
+      <div className="hidden md:block">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base">Earnings Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RewardsBarChart series={series} />
+            <div className="mt-2 text-xs text-muted-foreground">
+              Last 30 days. Hover bars to view day totals.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-4 md:mt-6">
+        <Link href="/" className="inline-flex">
+          <Button variant="outline" className="h-9 rounded-md px-3 text-sm">Back to Chat</Button>
+        </Link>
+      </div>
     </div>
   );
 }
