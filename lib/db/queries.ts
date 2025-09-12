@@ -6,6 +6,7 @@ import {
   count,
   desc,
   eq,
+  or,
   gt,
   gte,
   lte,
@@ -178,6 +179,155 @@ export async function getTodayRewardTotalByUserId(userId: string) {
     return rows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get rewards');
+  }
+}
+
+/**
+ * Rewards summary helpers
+ */
+export async function getLifetimeRewardTotalByUserId(userId: string) {
+  try {
+    const rows = await db
+      .select({ amount: rewardTransaction.amount })
+      .from(rewardTransaction)
+      .where(eq(rewardTransaction.userId, userId));
+
+    return rows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get lifetime rewards');
+  }
+}
+
+export async function getRewardsInRangeByUserId({
+  userId,
+  start,
+  end,
+}: {
+  userId: string;
+  start: Date;
+  end: Date;
+}) {
+  try {
+    const rows = await db
+      .select({ amount: rewardTransaction.amount, createdAt: rewardTransaction.createdAt })
+      .from(rewardTransaction)
+      .where(
+        and(
+          eq(rewardTransaction.userId, userId),
+          gte(rewardTransaction.createdAt, start),
+          lte(rewardTransaction.createdAt, end),
+        ),
+      )
+      .orderBy(desc(rewardTransaction.createdAt));
+
+    const total = rows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+
+    const byDay = new Map<string, number>();
+    for (const r of rows) {
+      const d = new Date(r.createdAt);
+      const key = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+        .toISOString()
+        .slice(0, 10);
+      byDay.set(key, (byDay.get(key) ?? 0) + (r.amount ?? 0));
+    }
+
+    return { total, byDay };
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get rewards range');
+  }
+}
+
+export async function getRewardsSeriesLastNDaysByUserId({
+  userId,
+  days,
+}: {
+  userId: string;
+  days: number;
+}) {
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  const start = new Date(end);
+  start.setDate(end.getDate() - (days - 1));
+  start.setHours(0, 0, 0, 0);
+
+  const { byDay } = await getRewardsInRangeByUserId({ userId, start, end });
+
+  const series: Array<{ date: string; total: number }> = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    series.push({ date: key, total: byDay.get(key) ?? 0 });
+  }
+  return series;
+}
+
+export async function getRewardsSummaryByUserId({
+  userId,
+  days,
+}: {
+  userId: string;
+  days: number;
+}) {
+  const [today, lifetime, series] = await Promise.all([
+    getTodayRewardTotalByUserId(userId),
+    getLifetimeRewardTotalByUserId(userId),
+    getRewardsSeriesLastNDaysByUserId({ userId, days }),
+  ]);
+
+  const month = series.reduce((sum, p) => sum + p.total, 0);
+  return { today, lifetime, month, series };
+}
+
+export async function getRewardTransactionsPageByUserId({
+  userId,
+  limit,
+  cursor,
+}: {
+  userId: string;
+  limit: number;
+  cursor: { createdAt: Date; id: string } | null;
+}) {
+  try {
+    const extendedLimit = limit + 1;
+
+    const whereBase = eq(rewardTransaction.userId, userId);
+
+    const rows = await db
+      .select({
+        id: rewardTransaction.id,
+        createdAt: rewardTransaction.createdAt,
+        amount: rewardTransaction.amount,
+        reason: rewardTransaction.reason,
+      })
+      .from(rewardTransaction)
+      .where(
+        cursor
+          ? and(
+              whereBase,
+              or(
+                lt(rewardTransaction.createdAt, cursor.createdAt),
+                and(
+                  eq(rewardTransaction.createdAt, cursor.createdAt),
+                  lt(rewardTransaction.id, cursor.id),
+                ),
+              ),
+            )
+          : whereBase,
+      )
+      .orderBy(desc(rewardTransaction.createdAt), desc(rewardTransaction.id))
+      .limit(extendedLimit);
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const last = items.at(-1) ?? null;
+    const nextCursor = last
+      ? `${last.createdAt.toISOString()}|${last.id}`
+      : null;
+
+    return { items, nextCursor };
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get reward transactions');
   }
 }
 
