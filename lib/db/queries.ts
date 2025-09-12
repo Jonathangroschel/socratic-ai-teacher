@@ -8,6 +8,7 @@ import {
   eq,
   gt,
   gte,
+  lte,
   inArray,
   lt,
   type SQL,
@@ -29,6 +30,8 @@ import {
   stream,
   userProfile,
   type UserProfile,
+  rewardTransaction,
+  type RewardTransaction,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -123,6 +126,58 @@ export async function deleteChatById({ id }: { id: string }) {
       'bad_request:database',
       'Failed to delete chat by id',
     );
+  }
+}
+
+export async function saveRewardTransaction(tx: {
+  userId: string;
+  chatId?: string | null;
+  messageId?: string | null;
+  amount: number;
+  rubric?: Record<string, unknown> | null;
+  reason?: string | null;
+}) {
+  try {
+    const [row] = await db
+      .insert(rewardTransaction)
+      .values({
+        id: generateUUID(),
+        userId: tx.userId,
+        chatId: tx.chatId ?? null,
+        messageId: tx.messageId ?? null,
+        amount: tx.amount,
+        rubric: tx.rubric ?? null,
+        reason: tx.reason ?? null,
+        createdAt: new Date(),
+      })
+      .returning();
+    return row as RewardTransaction;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to save reward');
+  }
+}
+
+export async function getTodayRewardTotalByUserId(userId: string) {
+  try {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const rows = await db
+      .select({ amount: rewardTransaction.amount })
+      .from(rewardTransaction)
+      .where(
+        and(
+          eq(rewardTransaction.userId, userId),
+          gte(rewardTransaction.createdAt, start),
+          lte(rewardTransaction.createdAt, end),
+        ),
+      );
+
+    return rows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get rewards');
   }
 }
 

@@ -20,6 +20,7 @@ export const myProvider = isTestEnvironment
           'chat-model-reasoning': reasoningModel,
           'title-model': titleModel,
           'artifact-model': artifactModel,
+          'reward-model': chatModel,
         },
       });
     })()
@@ -32,5 +33,6 @@ export const myProvider = isTestEnvironment
         }),
         'title-model': gateway.languageModel('openai/gpt-4.1'),
         'artifact-model': gateway.languageModel('openai/gpt-4.1'),
+        'reward-model': gateway.languageModel('openai/gpt-4.1-mini'),
       },
     });

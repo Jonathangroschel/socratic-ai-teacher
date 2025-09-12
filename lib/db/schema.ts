@@ -189,3 +189,17 @@ export const userProfile = pgTable('UserProfile', {
 });
 
 export type UserProfile = InferSelectModel<typeof userProfile>;
+
+// Rewards: minimalist per-message transactions
+export const rewardTransaction = pgTable('RewardTransaction', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  userId: uuid('userId').notNull().references(() => user.id),
+  chatId: uuid('chatId').references(() => chat.id),
+  messageId: uuid('messageId').references(() => message.id),
+  amount: integer('amount').notNull(),
+  rubric: jsonb('rubric'),
+  reason: text('reason'),
+  createdAt: timestamp('createdAt').notNull(),
+});
+
+export type RewardTransaction = InferSelectModel<typeof rewardTransaction>;

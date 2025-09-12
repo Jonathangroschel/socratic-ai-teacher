@@ -11,3 +11,9 @@ export const isTestEnvironment = Boolean(
 export const guestRegex = /^guest-\d+$/;
 
 export const DUMMY_PASSWORD = generateDummyPassword();
+
+// Rewards feature flag and defaults
+export const rewardsEnabled = process.env.REWARDS_ENABLED === 'true';
+export const REWARD_MIN = 100;
+export const REWARD_MAX = 10_000;
+export const REWARDS_DAILY_CAP = Number(process.env.REWARDS_DAILY_CAP ?? 50_000);
