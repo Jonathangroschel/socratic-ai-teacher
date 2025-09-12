@@ -74,12 +74,12 @@ export function RewardsBadge() {
           aria-label={`Today's earnings: ${todayTotal}`}
           className={
             'ml-auto order-3 flex items-center gap-1 rounded-md px-2 py-1 transition ' +
-            (bump ? 'bg-primary/10 shadow-sm scale-[1.03]' : 'hover:bg-muted')
+            (bump ? 'bg-primary/5 ring-1 ring-primary/20 shadow-sm' : 'hover:bg-muted')
           }
         >
           {/* Using img intentionally for a tiny SVG to avoid layout shift */}
           <img
-            src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles.svg"
+            src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles%20(1).svg"
             alt="earnings"
             className="size-4 opacity-90"
           />
