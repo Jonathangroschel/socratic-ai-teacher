@@ -32,7 +32,7 @@ export default function RewardsPage() {
   return (
     <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8">
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4 max-w-[396px] md:max-w-none mx-auto">
-        <Card className="col-span-2 w-full">
+        <Card className="md:col-span-2 w-full">
           <CardHeader className="flex items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings</CardTitle>
           </CardHeader>
