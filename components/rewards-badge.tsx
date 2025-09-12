@@ -66,6 +66,7 @@ export function RewardsBadge() {
             (bump ? 'bg-primary/10 shadow-sm scale-[1.03]' : 'hover:bg-muted')
           }
         >
+          {/* Using img intentionally for a tiny SVG to avoid layout shift */}
           <img
             src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles.svg"
             alt="earnings"
