@@ -18,6 +18,7 @@ export function DataStreamHandler() {
     lastProcessedIndex.current = dataStream.length - 1;
 
     newDeltas.forEach((delta) => {
+      // Handle rewards UI events elsewhere if needed
       const artifactDefinition = artifactDefinitions.find(
         (artifactDefinition) => artifactDefinition.kind === artifact.kind,
       );

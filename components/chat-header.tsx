@@ -10,6 +10,7 @@ import { useSidebar } from './ui/sidebar';
 import { memo } from 'react';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
 import type { Session } from 'next-auth';
+import Link from 'next/link';
 
 function PureChatHeader({
   chatId,
@@ -52,7 +53,18 @@ function PureChatHeader({
           className="order-1 md:order-2"
         />
       )}
-
+      <Link
+        href="/rewards"
+        className="ml-auto order-3 flex items-center gap-1 rounded-md px-2 py-1 hover:bg-muted transition-colors"
+        title="Today's earnings"
+      >
+        <img
+          src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles.svg"
+          alt="earnings"
+          className="size-4 opacity-90"
+        />
+        <span data-testid="rewards-today" className="text-sm font-medium">0</span>
+      </Link>
     </header>
   );
 }

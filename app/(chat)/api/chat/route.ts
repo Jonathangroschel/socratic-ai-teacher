@@ -31,6 +31,7 @@ import { entitlementsByUserType } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
 import { mem0 } from '@/lib/memory/mem0';
+import { evaluateAndReward } from '@/lib/rewards/evaluate';
 import {
   createResumableStreamContext,
   type ResumableStreamContext,
@@ -232,9 +233,39 @@ export async function POST(request: Request) {
             isEnabled: isProductionEnvironment,
             functionId: 'stream-text',
           },
-          onFinish: ({ usage }) => {
+          onFinish: async ({ usage }) => {
             finalUsage = usage;
             dataStream.write({ type: 'data-usage', data: usage });
+
+            // Reward evaluation (best-effort, synchronous for immediate UI update)
+            try {
+              const userText = message.parts
+                .map((p) => (p.type === 'text' ? p.text : ''))
+                .filter(Boolean)
+                .join('\n')
+                .trim();
+
+              const reward = await evaluateAndReward({
+                userId: session.user.id,
+                chatId: id,
+                messageId: message.id,
+                userText,
+                assistantText: '',
+              });
+
+              if (reward && reward.delta && reward.delta > 0) {
+                dataStream.write({
+                  type: 'data-reward',
+                  data: {
+                    delta: reward.delta,
+                    todayTotal: reward.todayTotal,
+                    lifetimeTotal: reward.lifetimeTotal,
+                  },
+                });
+              }
+            } catch (err) {
+              console.warn('reward emit failed', err);
+            }
           },
         });
 

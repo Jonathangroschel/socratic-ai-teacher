@@ -43,6 +43,7 @@ export type CustomUIDataTypes = {
   clear: null;
   finish: null;
   usage: LanguageModelUsage;
+  reward: { delta: number; todayTotal: number; lifetimeTotal?: number };
 };
 
 export type ChatMessage = UIMessage<
