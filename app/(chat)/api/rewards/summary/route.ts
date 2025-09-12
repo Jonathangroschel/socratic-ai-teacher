@@ -24,10 +24,10 @@ export async function GET(request: Request) {
     const base = await getRewardsSummaryByUserId({ userId: session.user.id, days });
 
     // Build timezone-aware day buckets for the last N days
-    const endUtc = new Date();
-    const startUtc = new Date(endUtc);
-    startUtc.setDate(endUtc.getDate() - (days - 1));
-    startUtc.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const endUtc = now;
+    // Fetch a superset window to cover tz offsets (days + 1)
+    const startUtc = new Date(now.getTime() - (days + 1) * 24 * 60 * 60 * 1000);
 
     const rows = await getRewardRowsInRangeByUserId({ userId: session.user.id, start: startUtc, end: endUtc });
 
@@ -46,14 +46,11 @@ export async function GET(request: Request) {
       return `${y}-${m}-${da}`;
     };
 
-    // Seed series keys for full span
+    // Seed series keys for last N days using tz-based labels from 'now - i days'
     const seriesMap = new Map<string, number>();
-    const spanStart = new Date(startUtc);
-    for (let i = 0; i < days; i++) {
-      const dt = new Date(spanStart);
-      dt.setDate(spanStart.getDate() + i);
-      const key = keyFor(dt);
-      seriesMap.set(key, 0);
+    for (let i = days - 1; i >= 0; i--) {
+      const dt = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      seriesMap.set(keyFor(dt), 0);
     }
     // Accumulate amounts into tz-based buckets
     for (const r of rows) {
@@ -62,10 +59,13 @@ export async function GET(request: Request) {
     }
 
     const series = Array.from(seriesMap.entries()).map(([date, total]) => ({ date, total }));
-    const todayKey = keyFor(new Date());
+    const todayKey = keyFor(now);
     const today = seriesMap.get(todayKey) ?? 0;
 
-    return Response.json({ today, lifetime: base.lifetime, month: base.month, series, dailyCap: REWARDS_DAILY_CAP, tz });
+    // Compute month as sum of series (tz-aware)
+    const month = series.reduce((sum, p) => sum + p.total, 0);
+
+    return Response.json({ today, lifetime: base.lifetime, month, series, dailyCap: REWARDS_DAILY_CAP, tz });
   } catch (e: any) {
     const msg = e?.message || '';
     // Graceful fallback if the migration hasn't run yet and table is missing
