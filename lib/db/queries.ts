@@ -237,6 +237,34 @@ export async function getRewardsInRangeByUserId({
   }
 }
 
+// Raw rows in range (amount, createdAt) for timezone-aware bucketing on the server
+export async function getRewardRowsInRangeByUserId({
+  userId,
+  start,
+  end,
+}: {
+  userId: string;
+  start: Date;
+  end: Date;
+}) {
+  try {
+    const rows = await db
+      .select({ amount: rewardTransaction.amount, createdAt: rewardTransaction.createdAt })
+      .from(rewardTransaction)
+      .where(
+        and(
+          eq(rewardTransaction.userId, userId),
+          gte(rewardTransaction.createdAt, start),
+          lte(rewardTransaction.createdAt, end),
+        ),
+      )
+      .orderBy(asc(rewardTransaction.createdAt));
+    return rows;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get rewards range rows');
+  }
+}
+
 export async function getRewardsSeriesLastNDaysByUserId({
   userId,
   days,

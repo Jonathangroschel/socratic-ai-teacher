@@ -18,7 +18,8 @@ type SummaryResponse = {
 const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json());
 
 export default function RewardsPage() {
-  const { data } = useSWR<SummaryResponse>('/api/rewards/summary?range=30d', fetcher, {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const { data } = useSWR<SummaryResponse>(`/api/rewards/summary?range=30d&tz=${encodeURIComponent(tz)}`, fetcher, {
     revalidateOnFocus: false,
   });
 

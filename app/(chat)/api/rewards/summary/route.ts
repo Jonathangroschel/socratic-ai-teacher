@@ -1,6 +1,6 @@
 import { auth } from '@/app/(auth)/auth';
 import { ChatSDKError } from '@/lib/errors';
-import { getRewardsSummaryByUserId } from '@/lib/db/queries';
+import { getRewardRowsInRangeByUserId, getRewardsSummaryByUserId } from '@/lib/db/queries';
 import { REWARDS_DAILY_CAP } from '@/lib/constants';
 
 export async function GET(request: Request) {
@@ -14,12 +14,58 @@ export async function GET(request: Request) {
       ? Math.min(365, Math.max(1, Number(range.replace('d', ''))))
       : 30;
 
-    const { today, lifetime, month, series } = await getRewardsSummaryByUserId({
-      userId: session.user.id,
-      days,
-    });
+    // Timezone-aware: use header tz first, then client tz param, fallback UTC
+    const headerTz = request.headers.get('x-vercel-ip-timezone');
+    const clientTz = searchParams.get('tz');
+    const tz = headerTz || clientTz || 'UTC';
 
-    return Response.json({ today, lifetime, month, series, dailyCap: REWARDS_DAILY_CAP });
+    // Lifetime and month (last N days) totals retain existing logic (UTC sum),
+    // while "today" and series are computed in the user's timezone.
+    const base = await getRewardsSummaryByUserId({ userId: session.user.id, days });
+
+    // Build timezone-aware day buckets for the last N days
+    const now = new Date();
+    const endUtc = now;
+    // Fetch a superset window to cover tz offsets (days + 1)
+    const startUtc = new Date(now.getTime() - (days + 1) * 24 * 60 * 60 * 1000);
+
+    const rows = await getRewardRowsInRangeByUserId({ userId: session.user.id, start: startUtc, end: endUtc });
+
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const keyFor = (d: Date) => {
+      // Format in tz, then construct yyyy-mm-dd key safely
+      const parts = fmt.formatToParts(d);
+      const y = parts.find((p) => p.type === 'year')?.value;
+      const m = parts.find((p) => p.type === 'month')?.value;
+      const da = parts.find((p) => p.type === 'day')?.value;
+      return `${y}-${m}-${da}`;
+    };
+
+    // Seed series keys for last N days using tz-based labels from 'now - i days'
+    const seriesMap = new Map<string, number>();
+    for (let i = days - 1; i >= 0; i--) {
+      const dt = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      seriesMap.set(keyFor(dt), 0);
+    }
+    // Accumulate amounts into tz-based buckets
+    for (const r of rows) {
+      const key = keyFor(new Date(r.createdAt));
+      if (seriesMap.has(key)) seriesMap.set(key, (seriesMap.get(key) ?? 0) + (r.amount ?? 0));
+    }
+
+    const series = Array.from(seriesMap.entries()).map(([date, total]) => ({ date, total }));
+    const todayKey = keyFor(now);
+    const today = seriesMap.get(todayKey) ?? 0;
+
+    // Compute month as sum of series (tz-aware)
+    const month = series.reduce((sum, p) => sum + p.total, 0);
+
+    return Response.json({ today, lifetime: base.lifetime, month, series, dailyCap: REWARDS_DAILY_CAP, tz });
   } catch (e: any) {
     const msg = e?.message || '';
     // Graceful fallback if the migration hasn't run yet and table is missing

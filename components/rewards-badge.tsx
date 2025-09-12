@@ -16,7 +16,8 @@ export function RewardsBadge() {
     let isMounted = true;
     (async () => {
       try {
-        const res = await fetch('/api/rewards/summary', { cache: 'no-store' });
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await fetch(`/api/rewards/summary?tz=${encodeURIComponent(tz)}`, { cache: 'no-store' });
         if (!res.ok) return;
         const json = await res.json();
         if (isMounted && typeof json?.today === 'number') {
@@ -55,7 +56,8 @@ export function RewardsBadge() {
         // Fallback: after every assistant finish, refresh summary once
         (async () => {
           try {
-            const res = await fetch('/api/rewards/summary', { cache: 'no-store' });
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const res = await fetch(`/api/rewards/summary?tz=${encodeURIComponent(tz)}`, { cache: 'no-store' });
             if (res.ok) {
               const json = await res.json();
               if (typeof json?.today === 'number') setTodayTotal(json.today);
