@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type SeriesPoint = {
   date: string; // ISO yyyy-MM-dd (local)
@@ -9,12 +9,25 @@ type SeriesPoint = {
 
 export function RewardsBarChart({
   series,
-  height = 220,
+  height = 260,
 }: {
   series: SeriesPoint[];
   height?: number;
 }) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(640);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const el = containerRef.current;
+    const ro = new (window as any).ResizeObserver((entries: any[]) => {
+      const cr = entries[0]?.contentRect;
+      if (cr?.width) setContainerWidth(Math.max(320, cr.width));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const { maxY, bars, dates } = useMemo(() => {
     const totals = series.map((s) => s.total);
@@ -24,11 +37,11 @@ export function RewardsBarChart({
     return { maxY, bars, dates };
   }, [series]);
 
-  const width = Math.max(320, series.length * 16 + 32);
+  const width = Math.max(containerWidth, series.length * 14 + 40);
   const chartPadding = { top: 16, bottom: 28, left: 12, right: 12 };
   const innerHeight = height - chartPadding.top - chartPadding.bottom;
   const innerWidth = width - chartPadding.left - chartPadding.right;
-  const barGap = 6;
+  const barGap = 4;
   const barWidth = Math.max(4, Math.floor(innerWidth / series.length) - barGap);
 
   const formatCompact = (n: number) => {
@@ -45,7 +58,7 @@ export function RewardsBarChart({
   };
 
   return (
-    <div className="relative w-full overflow-x-auto">
+    <div ref={containerRef} className="relative w-full overflow-x-auto">
       <svg
         width={width}
         height={height}
