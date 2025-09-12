@@ -79,7 +79,7 @@ export function RewardsBadge() {
           </span>
         </Link>
       </TooltipTrigger>
-      <TooltipContent align="end">Today's earnings: {todayTotal}</TooltipContent>
+      <TooltipContent align="end">Today&apos;s earnings: {todayTotal}</TooltipContent>
     </Tooltip>
   );
 }
