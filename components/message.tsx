@@ -129,7 +129,7 @@ const PurePreviewMessage = ({
                     <MessageContent
                       data-testid="message-content"
                       className={cn({
-                        'rounded-2xl px-3 py-2 break-words text-white text-right w-fit':
+                        'rounded-2xl px-3 py-2 break-words text-white text-left w-fit':
                           message.role === 'user',
                         'bg-transparent px-0 py-0 text-left':
                           message.role === 'assistant',
