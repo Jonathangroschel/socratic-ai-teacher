@@ -31,7 +31,7 @@ export default function RewardsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8">
-      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4 max-w-[396px] md:max-w-none mx-auto">
         <Card className="col-span-2 w-full">
           <CardHeader className="flex items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings</CardTitle>
@@ -81,7 +81,7 @@ export default function RewardsPage() {
         </Card>
       </div>
 
-      <div className="mt-4 md:mt-6">
+      <div className="mt-4 md:mt-6 max-w-[396px] md:max-w-none mx-auto">
         <Link href="/" className="inline-flex">
           <Button variant="outline" className="h-9 rounded-md px-3 text-sm">Back to Chat</Button>
         </Link>
