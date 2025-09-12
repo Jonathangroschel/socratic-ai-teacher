@@ -205,8 +205,10 @@ export async function POST(request: Request) {
       }
     }
 
+    let uiWriter: any = null;
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
+        uiWriter = dataStream;
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.`,
@@ -321,13 +323,25 @@ export async function POST(request: Request) {
             .join('\n')
             .trim() ?? '';
 
-          await evaluateAndReward({
+          const reward = await evaluateAndReward({
             userId: session.user.id,
             chatId: id,
             messageId: messages.at(-1)?.id ?? undefined,
             userText,
             assistantText,
           });
+          if (reward && reward.delta && reward.delta > 0) {
+            try {
+              uiWriter?.write?.({
+                type: 'data-reward',
+                data: {
+                  delta: reward.delta,
+                  todayTotal: reward.todayTotal,
+                  lifetimeTotal: reward.lifetimeTotal,
+                },
+              });
+            } catch {}
+          }
         } catch (err) {
           console.warn('reward evaluation failed', err);
         }

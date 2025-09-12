@@ -29,7 +29,10 @@ export async function evaluateAndReward({
   userText: string;
   assistantText: string;
 }) {
-  if (!rewardsEnabled) return null;
+  if (!rewardsEnabled) {
+    console.log('[rewards] disabled via REWARDS_ENABLED');
+    return null;
+  }
 
   try {
     const prompt = `You are a rewards evaluator for a learning platform. Your job is to assess whether the last user answer shows real learning and effort. You are not a chat assistant.
@@ -67,7 +70,10 @@ Then propose reward_raw_100_10000 (high variability allowed) and a short reason.
     );
     const amount = Math.min(raw, remaining);
 
-    if (amount <= 0) return { delta: 0, todayTotal: today, lifetimeTotal: undefined };
+    if (amount <= 0) {
+      console.log('[rewards] no grant (remaining cap = 0 or clamp)', { today, remaining, raw });
+      return { delta: 0, todayTotal: today, lifetimeTotal: undefined };
+    }
 
     const saved = await saveRewardTransaction({
       userId,
@@ -85,9 +91,10 @@ Then propose reward_raw_100_10000 (high variability allowed) and a short reason.
     });
 
     const updatedToday = today + amount;
+    console.log('[rewards] grant', { amount, today, updatedToday, reason: result.reason });
     return { delta: amount, todayTotal: updatedToday, lifetimeTotal: undefined, saved };
   } catch (err) {
-    console.warn('reward evaluation failed', err);
+    console.warn('[rewards] evaluation failed', err);
     return null;
   }
 }

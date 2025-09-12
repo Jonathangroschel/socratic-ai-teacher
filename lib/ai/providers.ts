@@ -33,6 +33,7 @@ export const myProvider = isTestEnvironment
         }),
         'title-model': gateway.languageModel('openai/gpt-4.1'),
         'artifact-model': gateway.languageModel('openai/gpt-4.1'),
-        'reward-model': gateway.languageModel('openai/gpt-4.1-mini'),
+        // Use a widely supported model for rewards to avoid deployment mismatches
+        'reward-model': gateway.languageModel('openai/gpt-4.1'),
       },
     });
