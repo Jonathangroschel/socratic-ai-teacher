@@ -143,7 +143,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-dvh flex items-center justify-center px-4">
       <div className="w-full max-w-3xl flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-5">
           <div className="text-2xl font-semibold">Polymatic setup</div>
           <div className="h-2 w-32 bg-muted rounded">
             <div
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <section className="flex flex-col gap-4">
             <div className="text-lg text-muted-foreground">
-              Pick at least 3 topics you enjoy. I’ll tailor sessions to these.
+              Pick at least 3 topics you enjoy. I’ll tailor sessions to these. Don’t worry—you can always change these later.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {INTERESTS.map((cat: InterestCategory) => (
