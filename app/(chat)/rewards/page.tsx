@@ -31,9 +31,9 @@ export default function RewardsPage() {
     new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8 fx-grain-vignette">
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4 max-w-[396px] md:max-w-none mx-auto">
-        <Card className="md:col-span-2 w-full">
+        <Card className="md:col-span-2 w-full fx-card">
           <CardHeader className="flex items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings</CardTitle>
           </CardHeader>
@@ -53,7 +53,7 @@ export default function RewardsPage() {
           </CardContent>
         </Card>
 
-        <Card className="w-full">
+        <Card className="w-full fx-card">
           <CardHeader className="space-y-0">
             <CardTitle className="text-base">Status</CardTitle>
           </CardHeader>
@@ -69,7 +69,7 @@ export default function RewardsPage() {
       </div>
 
       <div className="hidden md:block">
-        <Card className="w-full">
+        <Card className="w-full fx-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">Earnings Statistics</CardTitle>
           </CardHeader>
