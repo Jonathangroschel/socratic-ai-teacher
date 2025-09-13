@@ -30,7 +30,7 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
     // Use Wallet Standard discovery by default. If we need explicit adapters later, we can add them.
     return (
         <ConnectionProvider endpoint={endpoint} config={{ commitment: 'confirmed' }}>
-            <WalletProvider wallets={wallets} autoConnect>
+            <WalletProvider wallets={wallets}>
                 {children}
             </WalletProvider>
         </ConnectionProvider>
