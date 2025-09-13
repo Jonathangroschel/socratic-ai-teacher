@@ -34,7 +34,7 @@ export default function OnboardingPage() {
         const mapped: Record<string, Set<string>> = {};
         Object.entries(parsed).forEach(([k, arr]) => (mapped[k] = new Set(arr)));
         setSelected(mapped);
-      } catch {}
+      } catch { }
     }
     if (cachedGoals) setGoals(cachedGoals);
     if (cachedTime) setTimeBudget(Number(cachedTime));
@@ -72,12 +72,12 @@ export default function OnboardingPage() {
         .map((g) => g.trim())
         .filter(Boolean);
 
-      const payload = { 
-        interests, 
-        goals: goalsArray, 
-        timeBudgetMins: timeBudget 
+      const payload = {
+        interests,
+        goals: goalsArray,
+        timeBudgetMins: timeBudget
       };
-      
+
       console.log('Sending profile data:', payload);
 
       const res = await fetch('/api/profile', {
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
       } else {
         const errorData = await res.json().catch(() => ({}));
         console.error('Profile save failed:', res.status, errorData);
-        
+
         if (errorData.code === 'TABLE_NOT_EXISTS') {
           alert('Database is still setting up. Please wait a moment and try again.');
         } else {
@@ -194,7 +194,7 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between py-2">
               <div className="text-sm text-muted-foreground">{totalSelected} selected (min 3)</div>
               <Button disabled={totalSelected < 3} onClick={next}>
                 Continue

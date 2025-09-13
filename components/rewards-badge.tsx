@@ -23,7 +23,7 @@ export function RewardsBadge() {
         if (isMounted && typeof json?.today === 'number') {
           setTodayTotal(json.today);
         }
-      } catch {}
+      } catch { }
     })();
     return () => {
       isMounted = false;
@@ -62,7 +62,7 @@ export function RewardsBadge() {
               const json = await res.json();
               if (typeof json?.today === 'number') setTodayTotal(json.today);
             }
-          } catch {}
+          } catch { }
         })();
       }
     });
@@ -82,12 +82,18 @@ export function RewardsBadge() {
             (bump ? 'bg-primary/5 ring-1 ring-primary/20 shadow-sm' : 'hover:bg-muted')
           }
         >
-          {/* Using img intentionally for a tiny SVG to avoid layout shift */}
-          <img
-            src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles%20(1).svg"
-            alt="earnings"
-            className="size-4 opacity-90"
-          />
+          {/* Light/dark adaptive icon to ensure legibility */}
+          <picture>
+            <source
+              media="(prefers-color-scheme: dark)"
+              srcSet="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles%20(1).svg"
+            />
+            <img
+              src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles.svg"
+              alt="earnings"
+              className="size-4 opacity-90"
+            />
+          </picture>
           <span
             data-testid="rewards-today"
             className="text-sm font-medium tabular-nums"
