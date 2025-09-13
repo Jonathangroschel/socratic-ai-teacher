@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
+import { ConnectWallet } from '@/components/wallet/connect-wallet';
 
 type SummaryResponse = {
   today: number;
@@ -22,6 +23,7 @@ export default function RewardsPage() {
   const { data } = useSWR<SummaryResponse>(`/api/rewards/summary?range=30d&tz=${encodeURIComponent(tz)}`, fetcher, {
     revalidateOnFocus: false,
   });
+  const { data: walletsData, mutate: mutateWallets } = useSWR<{ items: Array<any> }>(`/api/wallets`, fetcher);
 
   const today = data?.today ?? 0;
   const lifetime = data?.lifetime ?? 0;
@@ -57,13 +59,58 @@ export default function RewardsPage() {
           <CardHeader className="space-y-0">
             <CardTitle className="text-base">Status</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <div className="text-sm text-muted-foreground">
-              Wallet not connected. You can connect it later.
+              Connect a wallet to receive airdrops of your earnings.
             </div>
-            <div className="mt-3">
-              <Button className="h-8 rounded-md px-3 text-sm">Connect Wallet</Button>
+            <div>
+              <ConnectWallet />
             </div>
+            {walletsData?.items?.length ? (
+              <div className="mt-1 rounded-md border bg-muted/25 p-3">
+                <div className="mb-2 text-sm font-medium">Saved Wallets</div>
+                <div className="flex flex-col gap-2">
+                  {walletsData.items.map((w) => (
+                    <div key={w.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5">{w.chain}</span>
+                        <span className="font-mono tabular-nums">{w.address.slice(0, 6)}…{w.address.slice(-6)}</span>
+                        {w.isVerified ? (
+                          <span className="text-xs text-green-600">Verified</span>
+                        ) : (
+                          <span className="text-xs text-amber-600">Unverified</span>
+                        )}
+                        {w.isPrimary && <span className="text-xs text-muted-foreground">Primary</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!w.isPrimary && (
+                          <Button
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={async () => {
+                              await fetch('/api/wallets/primary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: w.id }) });
+                              mutateWallets();
+                            }}
+                          >
+                            Make Primary
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={async () => {
+                            await fetch(`/api/wallets/${w.id}`, { method: 'DELETE' });
+                            mutateWallets();
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>

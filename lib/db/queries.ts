@@ -33,6 +33,9 @@ import {
   type UserProfile,
   rewardTransaction,
   type RewardTransaction,
+  userWallet,
+  type UserWallet,
+  walletVerificationNonce,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -40,6 +43,9 @@ import { generateHashedPassword } from './utils';
 import type { VisibilityType } from '@/components/visibility-selector';
 import { ChatSDKError } from '../errors';
 import { LanguageModelV2Usage } from '@ai-sdk/provider';
+import bs58 from 'bs58';
+import nacl from 'tweetnacl';
+import { PublicKey } from '@solana/web3.js';
 
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
@@ -332,15 +338,15 @@ export async function getRewardTransactionsPageByUserId({
       .where(
         cursor
           ? and(
-              whereBase,
-              or(
-                lt(rewardTransaction.createdAt, cursor.createdAt),
-                and(
-                  eq(rewardTransaction.createdAt, cursor.createdAt),
-                  lt(rewardTransaction.id, cursor.id),
-                ),
+            whereBase,
+            or(
+              lt(rewardTransaction.createdAt, cursor.createdAt),
+              and(
+                eq(rewardTransaction.createdAt, cursor.createdAt),
+                lt(rewardTransaction.id, cursor.id),
               ),
-            )
+            ),
+          )
           : whereBase,
       )
       .orderBy(desc(rewardTransaction.createdAt), desc(rewardTransaction.id))
@@ -975,6 +981,166 @@ export async function transferRewardsByUserId({
   }
 }
 
+// =====================
+// Wallet helpers
+// =====================
+
+export async function getUserWallets({ userId }: { userId: string }) {
+  try {
+    const rows = await db
+      .select()
+      .from(userWallet)
+      .where(eq(userWallet.userId, userId))
+      .orderBy(desc(userWallet.isPrimary), desc(userWallet.createdAt));
+    return rows as Array<UserWallet>;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get user wallets');
+  }
+}
+
+export async function upsertUserWallet({
+  userId,
+  chain,
+  address,
+  label,
+  isVerified,
+  makePrimary,
+  lastConnectedAt,
+}: {
+  userId: string;
+  chain: 'solana';
+  address: string;
+  label?: string | null;
+  isVerified?: boolean;
+  makePrimary?: boolean;
+  lastConnectedAt?: Date | null;
+}) {
+  try {
+    const now = new Date();
+    // Ensure only one primary per user
+    if (makePrimary) {
+      await db.update(userWallet).set({ isPrimary: false }).where(eq(userWallet.userId, userId));
+    }
+
+    // Try update first
+    const updated = await db
+      .update(userWallet)
+      .set({
+        label: label ?? null,
+        isVerified: isVerified ?? false,
+        isPrimary: Boolean(makePrimary),
+        updatedAt: now,
+        lastConnectedAt: lastConnectedAt ?? null,
+      })
+      .where(and(eq(userWallet.userId, userId), eq(userWallet.chain, 'solana'), eq(userWallet.address, address)));
+
+    if ((updated as any).rowCount && (updated as any).rowCount > 0) return;
+
+    // Else insert
+    await db.insert(userWallet).values({
+      id: generateUUID(),
+      userId,
+      chain: 'solana',
+      address,
+      label: label ?? null,
+      isVerified: isVerified ?? false,
+      isPrimary: Boolean(makePrimary),
+      createdAt: now,
+      updatedAt: now,
+      lastConnectedAt: lastConnectedAt ?? null,
+    });
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to upsert user wallet');
+  }
+}
+
+export async function setPrimaryWallet({ userId, id }: { userId: string; id: string }) {
+  try {
+    await db.update(userWallet).set({ isPrimary: false }).where(eq(userWallet.userId, userId));
+    await db.update(userWallet).set({ isPrimary: true, updatedAt: new Date() }).where(and(eq(userWallet.userId, userId), eq(userWallet.id, id)));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to set primary wallet');
+  }
+}
+
+export async function deleteWallet({ userId, id }: { userId: string; id: string }) {
+  try {
+    await db.delete(userWallet).where(and(eq(userWallet.userId, userId), eq(userWallet.id, id)));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to delete wallet');
+  }
+}
+
+export async function startWalletVerification({ userId, address }: { userId: string; address: string }) {
+  try {
+    const nonce = `Polymatic: Verify wallet ownership. Address=${address}. Nonce=${generateUUID()}. Expires in 5 minutes.`;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 5 * 60 * 1000);
+
+    await db.insert(walletVerificationNonce).values({
+      id: generateUUID(),
+      userId,
+      address,
+      nonce,
+      createdAt: now,
+      expiresAt,
+    });
+
+    return { nonce, expiresAt };
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to start wallet verification');
+  }
+}
+
+export async function verifyWalletSignature({
+  userId,
+  address,
+  signatureBase58,
+}: {
+  userId: string;
+  address: string;
+  signatureBase58: string;
+}) {
+  try {
+    // Load latest valid nonce for this user+address
+    const [row] = await db
+      .select()
+      .from(walletVerificationNonce)
+      .where(and(eq(walletVerificationNonce.userId, userId), eq(walletVerificationNonce.address, address)))
+      .orderBy(desc(walletVerificationNonce.createdAt))
+      .limit(1);
+
+    if (!row) throw new ChatSDKError('bad_request:api', 'No nonce found for verification');
+    if (new Date(row.expiresAt).getTime() < Date.now()) throw new ChatSDKError('bad_request:api', 'Nonce expired');
+
+    // Verify signature
+    const message = new TextEncoder().encode(row.nonce);
+    const signature = bs58.decode(signatureBase58);
+    const pubkey = new PublicKey(address);
+    const ok = nacl.sign.detached.verify(message, signature, pubkey.toBytes());
+    if (!ok) throw new ChatSDKError('bad_request:api', 'Invalid signature');
+
+    // Upsert wallet as verified; mark primary if none
+    const existing = await getUserWallets({ userId });
+    const makePrimary = existing.length === 0;
+    await upsertUserWallet({ userId, chain: 'solana', address, isVerified: true, makePrimary });
+
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof ChatSDKError) throw error;
+    throw new ChatSDKError('bad_request:api', 'Failed to verify wallet signature');
+  }
+}
+
+export async function transferUserWalletsByUserId({ fromUserId, toUserId }: { fromUserId: string; toUserId: string }): Promise<void> {
+  try {
+    if (fromUserId === toUserId) return;
+    await db.update(userWallet).set({ userId: toUserId }).where(eq(userWallet.userId, fromUserId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to transfer user wallets by id');
+  }
+}
+
 /**
  * Transfer profile data from a guest user to a regular user
  * Used when a guest user creates a regular account
@@ -989,24 +1155,24 @@ export async function transferGuestProfileToUser({
   try {
     // Find the guest user
     const guestUsers = await db.select().from(user).where(eq(user.email, guestEmail));
-    
+
     if (guestUsers.length === 0) {
       console.log('No guest user found with email:', guestEmail);
       return;
     }
-    
+
     const guestUser = guestUsers[0];
-    
+
     // Find the guest profile
     const guestProfile = await getUserProfileByUserId({ userId: guestUser.id });
-    
+
     if (!guestProfile) {
       console.log('No profile found for guest user:', guestUser.id);
       return;
     }
-    
+
     console.log('Found guest profile, transferring to new user:', newUserId);
-    
+
     // Transfer the profile data to the new user
     await upsertUserProfile({
       userId: newUserId,
@@ -1016,7 +1182,7 @@ export async function transferGuestProfileToUser({
       level: guestProfile.level,
       onboardingCompleted: true, // Ensure onboarding is marked as completed
     });
-    
+
     console.log('Profile data transferred successfully');
   } catch (error) {
     console.error('Failed to transfer guest profile:', error);

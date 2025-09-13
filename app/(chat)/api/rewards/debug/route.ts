@@ -9,6 +9,10 @@ export async function GET() {
     parsed: rewardsEnabled,
     raw: process.env.REWARDS_ENABLED ?? null,
     dailyCap: REWARDS_DAILY_CAP,
+    solana: {
+      network: process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet',
+      rpc: process.env.NEXT_PUBLIC_SOLANA_RPC || null,
+    },
   });
 }
 
