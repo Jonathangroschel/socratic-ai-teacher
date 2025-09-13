@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { clusterApiUrl, Connection } from '@solana/web3.js';
+import { clusterApiUrl } from '@solana/web3.js';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 
 function getEndpoint(): string {
@@ -19,7 +19,7 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
     // Use Wallet Standard discovery by default. If we need explicit adapters later, we can add them.
     return (
         <ConnectionProvider endpoint={endpoint} config={{ commitment: 'confirmed' }}>
-            <WalletProvider autoConnect>
+            <WalletProvider wallets={[]} autoConnect>
                 {children}
             </WalletProvider>
         </ConnectionProvider>
