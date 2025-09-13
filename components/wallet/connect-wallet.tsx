@@ -16,7 +16,7 @@ function truncate(addr?: string | null, head = 4, tail = 4) {
     return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
 }
 
-export function ConnectWallet() {
+export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVerified: boolean }> }) {
     const { connected, publicKey, wallets, select, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -82,6 +82,11 @@ export function ConnectWallet() {
     }, [select]);
 
     const [open, setOpen] = useState(false);
+    const hasVerified = useMemo(() => {
+        if (!saved || !publicKey) return false;
+        const a = publicKey.toBase58();
+        return saved.some((w) => w.address === a && w.isVerified);
+    }, [saved, publicKey]);
 
     if (!connected) {
         return (
@@ -97,12 +102,14 @@ export function ConnectWallet() {
     }
 
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             {address && <AddressChip address={address} />}
-            <Button disabled={verifying || !address} onClick={startVerification} className="h-8 rounded-md px-3 text-sm">
-                {verifying ? 'Verifying…' : 'Verify & Save'}
-            </Button>
-            <Button variant="ghost" onClick={() => disconnect()} className="h-8 rounded-md px-3 text-sm">
+            {!hasVerified && (
+                <Button disabled={verifying || !address} onClick={startVerification} className="h-8 rounded-md px-3 text-sm shrink-0">
+                    {verifying ? 'Verifying…' : 'Verify & Save'}
+                </Button>
+            )}
+            <Button variant="ghost" onClick={() => disconnect()} className="h-8 rounded-md px-3 text-sm shrink-0">
                 Disconnect
             </Button>
         </div>

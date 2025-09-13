@@ -70,16 +70,16 @@ export default function RewardsPage() {
             <div className="text-sm text-muted-foreground">
               Connect a wallet to receive airdrops of your earnings.
             </div>
-            <div>
-              <ConnectWallet />
+            <div className="flex flex-wrap gap-2">
+              <ConnectWallet saved={walletsData?.items?.map((w: any) => ({ address: w.address, isVerified: w.isVerified })) ?? []} />
             </div>
             {walletsData?.items?.length ? (
-              <div className="mt-1 rounded-md border bg-muted/25 p-3">
+              <div className="mt-1 rounded-md border bg-muted/25 p-3 overflow-hidden">
                 <div className="mb-2 text-sm font-medium">Saved Wallets</div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 max-w-full">
                   {walletsData.items.map((w) => (
                     <div key={w.id} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 overflow-hidden">
                         <span className="rounded-full bg-primary/10 px-2 py-0.5">{w.chain}</span>
                         <AddressChip address={w.address} />
                         {w.isVerified ? (
@@ -89,7 +89,7 @@ export default function RewardsPage() {
                         )}
                         {w.isPrimary && <span className="text-xs text-muted-foreground">Primary</span>}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {!w.isPrimary && (
                           <Button
                             variant="outline"
