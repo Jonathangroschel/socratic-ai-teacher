@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
@@ -24,6 +24,12 @@ export default function RewardsPage() {
     revalidateOnFocus: false,
   });
   const { data: walletsData, mutate: mutateWallets } = useSWR<{ items: Array<any> }>(`/api/wallets`, fetcher);
+
+  useEffect(() => {
+    const onChanged = () => mutateWallets();
+    document.addEventListener('wallets:changed', onChanged);
+    return () => document.removeEventListener('wallets:changed', onChanged);
+  }, [mutateWallets]);
 
   const today = data?.today ?? 0;
   const lifetime = data?.lifetime ?? 0;

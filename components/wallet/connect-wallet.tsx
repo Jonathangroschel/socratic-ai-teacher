@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import bs58 from 'bs58';
+import { ConnectSheet } from './connect-sheet';
 
 function truncate(addr?: string | null, head = 4, tail = 4) {
     if (!addr) return '';
@@ -71,23 +72,18 @@ export function ConnectWallet() {
         } catch { }
     }, [select]);
 
+    const [open, setOpen] = useState(false);
+
     if (!connected) {
         return (
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button className="h-8 rounded-md px-3 text-sm">Connect Wallet</Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                    {wallets.map((w) => (
-                        <DropdownMenuItem key={w.adapter.name} onSelect={() => connectWallet(w.adapter.name)} className="cursor-pointer">
-                            {w.adapter.icon && (
-                                <img src={w.adapter.icon} alt="" className="mr-2 size-4 rounded" />
-                            )}
-                            <span className="truncate">{w.adapter.name}</span>
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+                <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
+                <ConnectSheet
+                    open={open}
+                    onOpenChange={setOpen}
+                    onSelectWallet={(name) => connectWallet(name)}
+                />
+            </>
         );
     }
 
