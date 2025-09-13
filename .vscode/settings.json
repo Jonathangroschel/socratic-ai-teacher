@@ -2,23 +2,26 @@
   // Silence Tailwind-specific at-rules in VS Code's built-in CSS/SCSS linters
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
-  "less.lint.unknownAtRules": "ignore"
-}
-
-{
+  "less.lint.unknownAtRules": "ignore",
+  // Formatting
   "editor.formatOnSave": true,
   "[javascript]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
+  // Tooling
   "typescript.tsdk": "node_modules/typescript/lib",
   "eslint.workingDirectories": [
-    { "pattern": "app/*" },
-    { "pattern": "packages/*" }
+    {
+      "pattern": "app/*"
+    },
+    {
+      "pattern": "packages/*"
+    }
   ]
 }
