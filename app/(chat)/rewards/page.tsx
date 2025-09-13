@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
 import { ConnectWallet } from '@/components/wallet/connect-wallet';
+import { AddressChip } from '@/components/wallet/address-chip';
 
 type SummaryResponse = {
   today: number;
@@ -78,9 +79,9 @@ export default function RewardsPage() {
                 <div className="flex flex-col gap-2">
                   {walletsData.items.map((w) => (
                     <div key={w.id} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className="rounded-full bg-primary/10 px-2 py-0.5">{w.chain}</span>
-                        <span className="font-mono tabular-nums">{w.address.slice(0, 6)}…{w.address.slice(-6)}</span>
+                        <AddressChip address={w.address} />
                         {w.isVerified ? (
                           <span className="text-xs text-green-600">Verified</span>
                         ) : (

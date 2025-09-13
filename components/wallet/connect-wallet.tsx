@@ -7,6 +7,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import bs58 from 'bs58';
 import { ConnectSheet } from './connect-sheet';
+import { AddressChip } from './address-chip';
+import { toast } from '@/components/toast';
 
 function truncate(addr?: string | null, head = 4, tail = 4) {
     if (!addr) return '';
@@ -33,7 +35,10 @@ export function ConnectWallet() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ address }),
             });
-            if (!res.ok) return;
+            if (!res.ok) {
+                toast({ type: 'error', description: 'Unable to start verification. Please try again.' });
+                return;
+            }
             const { nonce } = await res.json();
             const message = new TextEncoder().encode(nonce);
             let signature: string | null = null;
@@ -50,6 +55,7 @@ export function ConnectWallet() {
             if (!signature) {
                 setVerifying(false);
                 inFlightRef.current = false;
+                toast({ type: 'error', description: 'Your wallet could not sign the message.' });
                 return;
             }
             const vr = await fetch('/api/wallets/verify', {
@@ -59,6 +65,9 @@ export function ConnectWallet() {
             });
             if (vr.ok) {
                 document.dispatchEvent(new CustomEvent('wallets:changed'));
+                toast({ type: 'success', description: 'Wallet verified and saved.' });
+            } else {
+                toast({ type: 'error', description: 'Verification failed. Please try again.' });
             }
         } catch { } finally {
             setVerifying(false);
@@ -89,14 +98,7 @@ export function ConnectWallet() {
 
     return (
         <div className="flex items-center gap-2">
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="outline" className="h-8 rounded-md px-3 text-sm">
-                        {truncate(address)}
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent align="end">Connected</TooltipContent>
-            </Tooltip>
+            {address && <AddressChip address={address} />}
             <Button disabled={verifying || !address} onClick={startVerification} className="h-8 rounded-md px-3 text-sm">
                 {verifying ? 'Verifying…' : 'Verify & Save'}
             </Button>
