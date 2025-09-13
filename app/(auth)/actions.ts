@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 
-import { createUser, getUser, transferUserContentByUserId, transferUserProfileByUserId } from '@/lib/db/queries';
+import { createUser, getUser, transferUserContentByUserId, transferUserProfileByUserId, transferRewardsByUserId } from '@/lib/db/queries';
 import { auth, signIn } from './auth';
 
 const authFormSchema = z.object({
@@ -81,6 +81,10 @@ export const register = async (
           toUserId: newUserId,
         });
         await transferUserContentByUserId({
+          fromUserId: session.user.id,
+          toUserId: newUserId,
+        });
+        await transferRewardsByUserId({
           fromUserId: session.user.id,
           toUserId: newUserId,
         });

@@ -950,6 +950,32 @@ export async function transferUserContentByUserId({
 }
 
 /**
+ * Transfer reward transactions from one user id to another.
+ * Used when converting a guest account to a registered account.
+ */
+export async function transferRewardsByUserId({
+  fromUserId,
+  toUserId,
+}: {
+  fromUserId: string;
+  toUserId: string;
+}): Promise<void> {
+  try {
+    if (fromUserId === toUserId) return;
+
+    await db
+      .update(rewardTransaction)
+      .set({ userId: toUserId })
+      .where(eq(rewardTransaction.userId, fromUserId));
+  } catch (error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to transfer rewards by user id',
+    );
+  }
+}
+
+/**
  * Transfer profile data from a guest user to a regular user
  * Used when a guest user creates a regular account
  */
