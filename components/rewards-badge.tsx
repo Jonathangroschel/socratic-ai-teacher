@@ -82,18 +82,22 @@ export function RewardsBadge() {
             (bump ? 'bg-primary/5 ring-1 ring-primary/20 shadow-sm' : 'hover:bg-muted')
           }
         >
-          {/* Light/dark adaptive icon to ensure legibility */}
-          <picture>
-            <source
-              media="(prefers-color-scheme: dark)"
-              srcSet="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles%20(1).svg"
-            />
+          {/* Light/dark adaptive icon to ensure legibility (class-based theme) */}
+          <span className="relative inline-flex">
+            {/* Light mode: black icon */}
             <img
               src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles.svg"
               alt="earnings"
-              className="size-4 opacity-90"
+              className="size-4 opacity-90 block dark:hidden"
             />
-          </picture>
+            {/* Dark mode: white icon */}
+            <img
+              src="https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/sparkles%20(1).svg"
+              alt=""
+              aria-hidden="true"
+              className="size-4 opacity-90 hidden dark:block"
+            />
+          </span>
           <span
             data-testid="rewards-today"
             className="text-sm font-medium tabular-nums"
