@@ -20,15 +20,15 @@
     .text-balance {
         text-wrap: balance;
     }
-    
+
     .-webkit-overflow-scrolling-touch {
         -webkit-overflow-scrolling: touch;
     }
-    
+
     .touch-pan-y {
         touch-action: pan-y;
     }
-    
+
     .overscroll-behavior-contain {
         overscroll-behavior: contain;
     }
@@ -70,6 +70,7 @@
         --sidebar-border: 220 13% 91%;
         --sidebar-ring: 217.2 91.2% 59.8%;
     }
+
     .dark {
         --background: 240 10% 3.9%;
         --foreground: 0 0% 98%;
@@ -116,7 +117,7 @@
         overflow-x: hidden;
         position: relative;
     }
-    
+
     html {
         overflow-x: hidden;
     }
@@ -150,7 +151,7 @@
     @apply bg-background dark:bg-zinc-800 outline-none selection:bg-zinc-900 !important;
 }
 
-.ͼo.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.ͼo.cm-focused>.cm-scroller>.cm-selectionLayer .cm-selectionBackground,
 .ͼo.cm-selectionBackground,
 .ͼo.cm-content::selection {
     @apply bg-zinc-200 dark:bg-zinc-900 !important;
@@ -229,7 +230,8 @@
     border: 1px solid transparent;
     background:
         linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
-        linear-gradient(0deg, transparent, transparent) border-box;
+        /* Subtle static border visible even without hover */
+        linear-gradient(0deg, hsl(var(--border) / 0.6), hsl(var(--border) / 0.6)) border-box;
     transition: box-shadow 200ms ease, transform 200ms ease, background 200ms ease;
     will-change: box-shadow, transform, background;
 }
@@ -260,7 +262,8 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.03; /* ~3% grain */
+    opacity: 0.03;
+    /* ~3% grain */
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
     background-size: 200px 200px;
@@ -272,7 +275,7 @@
     inset: -2% -2% -2% -2%;
     pointer-events: none;
     background: radial-gradient(120% 80% at 50% 20%,
-        color-mix(in oklab, transparent 100%, black 0%) 0%,
-        color-mix(in oklab, transparent 100%, black 7%) 70%,
-        color-mix(in oklab, transparent 100%, black 12%) 100%);
+            color-mix(in oklab, transparent 100%, black 0%) 0%,
+            color-mix(in oklab, transparent 100%, black 7%) 70%,
+            color-mix(in oklab, transparent 100%, black 12%) 100%);
 }
