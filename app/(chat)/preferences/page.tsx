@@ -70,11 +70,14 @@ export default function PreferencesPage() {
         .map((g) => g.trim())
         .filter(Boolean);
 
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ interests, goals: goalsArray, timeBudgetMins: timeBudget }),
       });
+      if (res.ok) {
+        router.push('/chat');
+      }
     } catch { }
     setSaving(false);
   }
