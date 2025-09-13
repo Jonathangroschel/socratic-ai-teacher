@@ -203,3 +203,31 @@ export const rewardTransaction = pgTable('RewardTransaction', {
 });
 
 export type RewardTransaction = InferSelectModel<typeof rewardTransaction>;
+
+// User-linked wallets (for airdrops/payouts)
+export const userWallet = pgTable('UserWallet', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  userId: uuid('userId').notNull().references(() => user.id),
+  chain: varchar('chain', { enum: ['solana'] }).notNull().default('solana'),
+  address: text('address').notNull(),
+  label: text('label'),
+  isPrimary: boolean('isPrimary').notNull().default(false),
+  isVerified: boolean('isVerified').notNull().default(false),
+  createdAt: timestamp('createdAt').notNull(),
+  updatedAt: timestamp('updatedAt').notNull(),
+  lastConnectedAt: timestamp('lastConnectedAt'),
+});
+
+export type UserWallet = InferSelectModel<typeof userWallet>;
+
+// Ephemeral nonces for signature verification
+export const walletVerificationNonce = pgTable('WalletVerificationNonce', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  userId: uuid('userId').notNull().references(() => user.id),
+  address: text('address').notNull(),
+  nonce: text('nonce').notNull(),
+  expiresAt: timestamp('expiresAt').notNull(),
+  createdAt: timestamp('createdAt').notNull(),
+});
+
+export type WalletVerificationNonce = InferSelectModel<typeof walletVerificationNonce>;
