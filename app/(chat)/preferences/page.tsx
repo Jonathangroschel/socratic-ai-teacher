@@ -38,7 +38,7 @@ export default function PreferencesPage() {
           setGoals(Array.isArray(profile.goals) ? (profile.goals as string[]).join(', ') : '');
           setTimeBudget(typeof profile.timeBudgetMins === 'number' ? profile.timeBudgetMins : 30);
         }
-      } catch {}
+      } catch { }
     })();
   }, []);
 
@@ -75,14 +75,14 @@ export default function PreferencesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ interests, goals: goalsArray, timeBudgetMins: timeBudget }),
       });
-    } catch {}
+    } catch { }
     setSaving(false);
   }
 
   return (
     <div className="min-h-dvh flex items-center justify-center px-4">
       <div className="w-full max-w-3xl flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-5">
           <div className="text-2xl font-semibold">Learning preferences</div>
         </div>
 
@@ -146,7 +146,7 @@ export default function PreferencesPage() {
           </div>
         </section>
 
-        <section className="flex items-center justify-between">
+        <section className="flex items-center justify-between pb-4">
           <div className="flex flex-wrap gap-2">
             {Object.entries(selected).flatMap(([cat, set]) =>
               Array.from(set).map((t) => (
