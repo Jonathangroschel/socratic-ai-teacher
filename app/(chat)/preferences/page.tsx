@@ -45,7 +45,7 @@ export default function PreferencesPage() {
   function scheduleSave() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      void save();
+      void save({ redirect: false });
     }, 400);
   }
 
@@ -59,7 +59,7 @@ export default function PreferencesPage() {
     scheduleSave();
   }
 
-  async function save() {
+  async function save({ redirect = false }: { redirect?: boolean } = {}) {
     setSaving(true);
     try {
       const interests = Object.entries(selected)
@@ -75,9 +75,7 @@ export default function PreferencesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ interests, goals: goalsArray, timeBudgetMins: timeBudget }),
       });
-      if (res.ok) {
-        router.push('/chat');
-      }
+      if (res.ok && redirect) router.push('/chat');
     } catch { }
     setSaving(false);
   }
@@ -163,7 +161,11 @@ export default function PreferencesPage() {
             <Button variant="outline" onClick={() => router.back()}>
               Back
             </Button>
-            <Button disabled={saving || totalSelected < 1} onClick={save} type="button">
+            <Button
+              disabled={saving || totalSelected < 1}
+              onClick={() => save({ redirect: true })}
+              type="button"
+            >
               {saving ? 'Saving…' : 'Save changes'}
             </Button>
           </div>
