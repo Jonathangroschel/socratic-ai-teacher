@@ -1077,6 +1077,12 @@ export async function startWalletVerification({ userId, address }: { userId: str
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 5 * 60 * 1000);
 
+    // Upsert: ensure a single active nonce per user+address
+    // Delete existing and insert new (portable approach across Postgres variants)
+    await db
+      .delete(walletVerificationNonce)
+      .where(and(eq(walletVerificationNonce.userId, userId), eq(walletVerificationNonce.address, address)));
+
     await db.insert(walletVerificationNonce).values({
       id: generateUUID(),
       userId,
@@ -1124,6 +1130,11 @@ export async function verifyWalletSignature({
     const existing = await getUserWallets({ userId });
     const makePrimary = existing.length === 0;
     await upsertUserWallet({ userId, chain: 'solana', address, isVerified: true, makePrimary });
+
+    // Invalidate nonce after successful verification
+    await db
+      .delete(walletVerificationNonce)
+      .where(and(eq(walletVerificationNonce.userId, userId), eq(walletVerificationNonce.address, address)));
 
     return { ok: true };
   } catch (error) {

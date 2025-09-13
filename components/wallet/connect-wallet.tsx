@@ -17,11 +17,14 @@ export function ConnectWallet() {
     const { connected, publicKey, wallets, select, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
     const [saving, setSaving] = useState(false);
+    const inFlightRef = useRef(false);
 
     const address = useMemo(() => publicKey?.toBase58() ?? null, [publicKey]);
 
     const startVerification = useCallback(async () => {
         if (!address) return;
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
         setVerifying(true);
         try {
             const res = await fetch('/api/wallets/start', {
@@ -45,6 +48,7 @@ export function ConnectWallet() {
             }
             if (!signature) {
                 setVerifying(false);
+                inFlightRef.current = false;
                 return;
             }
             const vr = await fetch('/api/wallets/verify', {
@@ -53,14 +57,11 @@ export function ConnectWallet() {
                 body: JSON.stringify({ address, signature }),
             });
             if (vr.ok) {
-                // Refetch wallets list in the page using SWR if available
-                try {
-                    // light ping to invalidate cache consumers
-                    await fetch('/api/wallets', { cache: 'no-store' });
-                } catch { }
+                document.dispatchEvent(new CustomEvent('wallets:changed'));
             }
         } catch { } finally {
             setVerifying(false);
+            inFlightRef.current = false;
         }
     }, [address, publicKey]);
 
