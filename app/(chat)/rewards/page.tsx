@@ -112,6 +112,16 @@ export default function RewardsPage() {
                         >
                           Remove
                         </Button>
+                        <Button
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={async () => {
+                            // Allow replacing current connected wallet easily
+                            document.dispatchEvent(new CustomEvent('wallets:replace'));
+                          }}
+                        >
+                          Replace
+                        </Button>
                       </div>
                     </div>
                   ))}

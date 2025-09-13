@@ -17,7 +17,7 @@ function truncate(addr?: string | null, head = 4, tail = 4) {
 }
 
 export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVerified: boolean }> }) {
-    const { connected, publicKey, wallets, select, disconnect, connecting, signMessage } = useWallet();
+    const { connected, wallet, publicKey, wallets, select, connect, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
     const [saving, setSaving] = useState(false);
     const inFlightRef = useRef(false);
@@ -77,11 +77,24 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
 
     const connectWallet = useCallback(async (name: string) => {
         try {
+            // If already connected to another wallet, disconnect first
+            if (connected && wallet?.adapter?.name !== name) {
+                await disconnect();
+            }
             await select(name as any);
-        } catch { }
-    }, [select]);
+            // Explicitly connect (autoConnect is disabled)
+            await connect();
+        } catch (e) {
+            toast({ type: 'error', description: 'Unable to open wallet. Check extension/app and try again.' });
+        }
+    }, [connected, wallet?.adapter?.name, select, connect, disconnect]);
 
     const [open, setOpen] = useState(false);
+    useEffect(() => {
+        const onReplace = () => setOpen(true);
+        document.addEventListener('wallets:replace', onReplace);
+        return () => document.removeEventListener('wallets:replace', onReplace);
+    }, []);
     const hasVerified = useMemo(() => {
         if (!saved || !publicKey) return false;
         const a = publicKey.toBase58();
