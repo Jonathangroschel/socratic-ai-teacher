@@ -45,7 +45,7 @@ export default function Page() {
       updateSession();
       // Redirect to the chat page instead of just refreshing
       didNavigateRef.current = true;
-      router.push('/');
+      router.push('/chat');
     }
   }, [state.status, router, updateSession]);
 

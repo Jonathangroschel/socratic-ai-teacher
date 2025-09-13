@@ -4,7 +4,7 @@ import { Chat } from '@/components/chat';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 import { generateUUID } from '@/lib/utils';
 import { DataStreamHandler } from '@/components/data-stream-handler';
-import { auth } from '../(auth)/auth';
+import { auth } from '../../(auth)/auth';
 import { redirect } from 'next/navigation';
 import { getUserProfileByUserId } from '@/lib/db/queries';
 
@@ -20,15 +20,12 @@ export default async function Page() {
   let profile = null;
   try {
     profile = await getUserProfileByUserId({ userId: session.user.id });
-    console.log('Profile found:', profile);
-    console.log('Onboarding completed:', profile?.onboardingCompleted);
   } catch (error) {
     // If table doesn't exist or other DB error, treat as incomplete onboarding
     console.warn('Failed to fetch user profile, redirecting to onboarding:', error);
   }
-  
+
   if (!profile || !profile.onboardingCompleted) {
-    console.log('Redirecting to onboarding - profile:', !!profile, 'onboardingCompleted:', profile?.onboardingCompleted);
     redirect('/onboarding');
   }
 
@@ -52,3 +49,5 @@ export default async function Page() {
     </>
   );
 }
+
+
