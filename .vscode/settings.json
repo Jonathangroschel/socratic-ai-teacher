@@ -1,4 +1,11 @@
 {
+  // Silence Tailwind-specific at-rules in VS Code's built-in CSS/SCSS linters
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore"
+}
+
+{
   "editor.formatOnSave": true,
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
