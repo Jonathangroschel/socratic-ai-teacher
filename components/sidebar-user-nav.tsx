@@ -93,6 +93,12 @@ export function SidebarUserNav({ user }: { user: User }) {
               className="cursor-pointer"
               onSelect={() => {
                 router.push('/preferences');
+                // Collapse/close sidebar after navigating (match Dashboard behavior)
+                if (isMobile) {
+                  setOpenMobile(false);
+                } else {
+                  setOpen(false);
+                }
               }}
             >
               Learning preferences
