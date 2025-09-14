@@ -16,7 +16,7 @@ function truncate(addr?: string | null, head = 4, tail = 4) {
     return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
 }
 
-export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVerified: boolean }> }) {
+export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVerified: boolean; isPrimary?: boolean }> }) {
     const { connected, wallet, publicKey, wallets, select, connect, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -95,13 +95,23 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
         document.addEventListener('wallets:replace', onReplace);
         return () => document.removeEventListener('wallets:replace', onReplace);
     }, []);
-    const hasVerified = useMemo(() => {
-        if (!saved || !publicKey) return false;
-        const a = publicKey.toBase58();
-        return saved.some((w) => w.address === a && w.isVerified);
-    }, [saved, publicKey]);
+    const savedPrimary = useMemo(() => {
+        if (!saved || saved.length === 0) return null;
+        return saved.find((w) => w.isVerified && w.isPrimary) || saved.find((w) => w.isVerified) || saved[0] || null;
+    }, [saved]);
 
-    if (!connected) {
+    const hasVerified = useMemo(() => {
+        if (!publicKey) return Boolean(savedPrimary);
+        const a = publicKey.toBase58();
+        return saved?.some((w) => w.address === a && w.isVerified) || false;
+    }, [saved, publicKey, savedPrimary]);
+
+    const displayAddress = useMemo(() => {
+        if (connected && publicKey) return publicKey.toBase58();
+        return savedPrimary?.address ?? null;
+    }, [connected, publicKey, savedPrimary]);
+
+    if (!connected && !displayAddress) {
         return (
             <>
                 <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
@@ -116,15 +126,26 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
 
     return (
         <div className="flex flex-wrap items-center gap-2">
-            {address && <AddressChip address={address} />}
-            {!hasVerified && (
+            {displayAddress && <AddressChip address={displayAddress} />}
+            {connected && !hasVerified && (
                 <Button disabled={verifying || !address} onClick={startVerification} className="h-8 rounded-md px-3 text-sm shrink-0">
                     {verifying ? 'Verifying…' : 'Verify & Save'}
                 </Button>
             )}
-            <Button variant="ghost" onClick={() => disconnect()} className="h-8 rounded-md px-3 text-sm shrink-0">
-                Disconnect
-            </Button>
+            {connected ? (
+                <Button variant="ghost" onClick={() => disconnect()} className="h-8 rounded-md px-3 text-sm shrink-0">
+                    Disconnect
+                </Button>
+            ) : (
+                <>
+                    <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
+                    <ConnectSheet
+                        open={open}
+                        onOpenChange={setOpen}
+                        onSelectWallet={(name) => connectWallet(name)}
+                    />
+                </>
+            )}
         </div>
     );
 }

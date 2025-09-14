@@ -70,7 +70,7 @@ export default function RewardsPage() {
               Connect a wallet to receive airdrops of your earnings.
             </div>
             <div className="flex flex-wrap gap-2">
-              <ConnectWallet saved={walletsData?.items?.map((w: any) => ({ address: w.address, isVerified: w.isVerified })) ?? []} />
+              <ConnectWallet saved={walletsData?.items?.map((w: any) => ({ address: w.address, isVerified: w.isVerified, isPrimary: w.isPrimary })) ?? []} />
             </div>
             {/* Saved wallets list intentionally hidden per design simplification */}
           </CardContent>
