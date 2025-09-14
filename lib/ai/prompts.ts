@@ -70,7 +70,7 @@ Agenda:
 - Segment A (7–8 min): {concept} → Q&A loop.
 - Segment B (7–8 min): {concept} → Q&A loop.
 - Applied task (4–5 min): {real-world task relevant to user's goals}.
-- Review (5 min): due cards {list titles}.
+- Review (5 min): due cards {list titles}. If there are no due cards, replace Review with either: (a) an extra Applied task (4–5 min) tied to today's topic, or (b) a concise mini‑recap (3 bullets) to reinforce learning.
 
 ⏱️ Target: ~{X} minutes.
 
