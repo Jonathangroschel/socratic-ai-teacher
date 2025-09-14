@@ -141,17 +141,17 @@ export async function POST(request: Request) {
       const profileRaw = await getUserProfileByUserId({ userId: session.user.id });
       profile = profileRaw
         ? {
-            interests: Array.isArray(profileRaw.interests)
-              ? (profileRaw.interests as Array<{ category: string; topics: string[] }>)
+          interests: Array.isArray(profileRaw.interests)
+            ? (profileRaw.interests as Array<{ category: string; topics: string[] }>)
+            : null,
+          goals: Array.isArray(profileRaw.goals)
+            ? (profileRaw.goals as string[])
+            : null,
+          timeBudgetMins:
+            typeof profileRaw.timeBudgetMins === 'number'
+              ? profileRaw.timeBudgetMins
               : null,
-            goals: Array.isArray(profileRaw.goals)
-              ? (profileRaw.goals as string[])
-              : null,
-            timeBudgetMins:
-              typeof profileRaw.timeBudgetMins === 'number'
-                ? profileRaw.timeBudgetMins
-                : null,
-          }
+        }
         : null;
     } catch (error) {
       console.warn('Failed to fetch user profile for chat, continuing without profile:', error);
@@ -188,7 +188,7 @@ export async function POST(request: Request) {
     if (mem0 && session?.user?.id) {
       try {
         const results = await mem0.search(
-          'progress OR last session OR weaknesses OR next steps',
+          'progress OR last session OR weaknesses OR next steps OR review candidates OR concept deck',
           {
             user_id: session.user.id,
             top_k: 5,
@@ -212,17 +212,17 @@ export async function POST(request: Request) {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           temperature: 0.7,
-          system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.`,
+          system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.\n\nReview policy: If no 'Recent learning memory' block is present or it contains no prior concepts, OMIT the Review segment (do not invent review cards). Only include Review if specific prior concepts are present or the user explicitly asks for review.\n\nSaving for later review: When you encounter a concept that the student should revisit, append a compact block at the end:\n🧠 Memory — Review candidates\n- {Title} — {1-line why it’s worth reviewing}; {suggested interval: 1d/3d/7d}\nInclude at most 3 items. This block will be stored by the platform.`,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
             selectedChatModel === 'chat-model-reasoning'
               ? []
               : [
-                  'createDocument',
-                  'updateDocument',
-                  'requestSuggestions',
-                ],
+                'createDocument',
+                'updateDocument',
+                'requestSuggestions',
+              ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
             createDocument: createDocument({ session, dataStream }),
@@ -341,7 +341,7 @@ export async function POST(request: Request) {
                   lifetimeTotal: reward.lifetimeTotal,
                 },
               });
-            } catch {}
+            } catch { }
           }
         } catch (err) {
           console.warn('reward evaluation failed', err);
