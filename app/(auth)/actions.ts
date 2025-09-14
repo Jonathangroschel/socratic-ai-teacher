@@ -2,11 +2,7 @@
 
 import { z } from 'zod';
 
-<<<<<<< HEAD
-import { createUser, getUser, transferUserContentByUserId, transferUserProfileByUserId, transferRewardsByUserId } from '@/lib/db/queries';
-=======
 import { createUser, getUser, transferUserContentByUserId, transferUserProfileByUserId, transferRewardsByUserId, transferUserWalletsByUserId } from '@/lib/db/queries';
->>>>>>> test-gpt5
 import { auth, signIn } from './auth';
 
 const authFormSchema = z.object({
@@ -92,13 +88,10 @@ export const register = async (
           fromUserId: session.user.id,
           toUserId: newUserId,
         });
-<<<<<<< HEAD
-=======
         await transferUserWalletsByUserId({
           fromUserId: session.user.id,
           toUserId: newUserId,
         });
->>>>>>> test-gpt5
       } catch (transferError) {
         console.error('Error transferring profile:', transferError);
         // Continue even if transfer fails
