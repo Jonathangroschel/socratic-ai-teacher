@@ -1,11 +1,12 @@
 'use client';
 
 import useSWR from 'swr';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
+import { ConnectWallet } from '@/components/wallet/connect-wallet';
 
 type SummaryResponse = {
   today: number;
@@ -22,6 +23,13 @@ export default function RewardsPage() {
   const { data } = useSWR<SummaryResponse>(`/api/rewards/summary?range=30d&tz=${encodeURIComponent(tz)}`, fetcher, {
     revalidateOnFocus: false,
   });
+  const { data: walletsData, mutate: mutateWallets } = useSWR<{ items: Array<any> }>(`/api/wallets`, fetcher);
+
+  useEffect(() => {
+    const onChanged = () => mutateWallets();
+    document.addEventListener('wallets:changed', onChanged);
+    return () => document.removeEventListener('wallets:changed', onChanged);
+  }, [mutateWallets]);
 
   const today = data?.today ?? 0;
   const lifetime = data?.lifetime ?? 0;
@@ -57,13 +65,14 @@ export default function RewardsPage() {
           <CardHeader className="space-y-0">
             <CardTitle className="text-base">Status</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <div className="text-sm text-muted-foreground">
-              Wallet not connected. You can connect it later.
+              Connect a wallet to receive airdrops of your earnings.
             </div>
-            <div className="mt-3">
-              <Button className="h-8 rounded-md px-3 text-sm">Connect Wallet</Button>
+            <div className="flex flex-wrap gap-2">
+              <ConnectWallet saved={walletsData?.items?.map((w: any) => ({ id: w.id, address: w.address, isVerified: w.isVerified, isPrimary: w.isPrimary })) ?? []} />
             </div>
+            {/* Saved wallets list intentionally hidden per design simplification */}
           </CardContent>
         </Card>
       </div>

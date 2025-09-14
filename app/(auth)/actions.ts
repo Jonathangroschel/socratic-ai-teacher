@@ -2,7 +2,11 @@
 
 import { z } from 'zod';
 
+<<<<<<< HEAD
 import { createUser, getUser, transferUserContentByUserId, transferUserProfileByUserId, transferRewardsByUserId } from '@/lib/db/queries';
+=======
+import { createUser, getUser, transferUserContentByUserId, transferUserProfileByUserId, transferRewardsByUserId, transferUserWalletsByUserId } from '@/lib/db/queries';
+>>>>>>> test-gpt5
 import { auth, signIn } from './auth';
 
 const authFormSchema = z.object({
@@ -42,12 +46,12 @@ export const login = async (
 
 export interface RegisterActionState {
   status:
-    | 'idle'
-    | 'in_progress'
-    | 'success'
-    | 'failed'
-    | 'user_exists'
-    | 'invalid_data';
+  | 'idle'
+  | 'in_progress'
+  | 'success'
+  | 'failed'
+  | 'user_exists'
+  | 'invalid_data';
 }
 
 export const register = async (
@@ -65,7 +69,7 @@ export const register = async (
     if (existingUser) {
       return { status: 'user_exists' } as RegisterActionState;
     }
-    
+
     // Create the new user
     await createUser(validatedData.email, validatedData.password);
     // Get the newly created user to get the ID
@@ -88,12 +92,19 @@ export const register = async (
           fromUserId: session.user.id,
           toUserId: newUserId,
         });
+<<<<<<< HEAD
+=======
+        await transferUserWalletsByUserId({
+          fromUserId: session.user.id,
+          toUserId: newUserId,
+        });
+>>>>>>> test-gpt5
       } catch (transferError) {
         console.error('Error transferring profile:', transferError);
         // Continue even if transfer fails
       }
     }
-    
+
     // Sign in with the new credentials
     await signIn('credentials', {
       email: validatedData.email,
