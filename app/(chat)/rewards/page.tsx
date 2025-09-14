@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
 import { ConnectWallet } from '@/components/wallet/connect-wallet';
-import { AddressChip } from '@/components/wallet/address-chip';
 
 type SummaryResponse = {
   today: number;
@@ -73,61 +72,7 @@ export default function RewardsPage() {
             <div className="flex flex-wrap gap-2">
               <ConnectWallet saved={walletsData?.items?.map((w: any) => ({ address: w.address, isVerified: w.isVerified })) ?? []} />
             </div>
-            {walletsData?.items?.length ? (
-              <div className="mt-1 rounded-md border bg-muted/25 p-3 overflow-hidden">
-                <div className="mb-2 text-sm font-medium">Saved Wallets</div>
-                <div className="flex flex-col gap-2 max-w-full">
-                  {walletsData.items.map((w) => (
-                    <div key={w.id} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5">{w.chain}</span>
-                        <AddressChip address={w.address} />
-                        {w.isVerified ? (
-                          <span className="text-xs text-green-600">Verified</span>
-                        ) : (
-                          <span className="text-xs text-amber-600">Unverified</span>
-                        )}
-                        {w.isPrimary && <span className="text-xs text-muted-foreground">Primary</span>}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {!w.isPrimary && (
-                          <Button
-                            variant="outline"
-                            className="h-7 px-2 text-xs"
-                            onClick={async () => {
-                              await fetch('/api/wallets/primary', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: w.id }) });
-                              mutateWallets();
-                            }}
-                          >
-                            Make Primary
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          className="h-7 px-2 text-xs"
-                          onClick={async () => {
-                            await fetch(`/api/wallets/${w.id}`, { method: 'DELETE' });
-                            mutateWallets();
-                          }}
-                        >
-                          Remove
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="h-7 px-2 text-xs"
-                          onClick={async () => {
-                            // Allow replacing current connected wallet easily
-                            document.dispatchEvent(new CustomEvent('wallets:replace'));
-                          }}
-                        >
-                          Replace
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+            {/* Saved wallets list intentionally hidden per design simplification */}
           </CardContent>
         </Card>
       </div>
