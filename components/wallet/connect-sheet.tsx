@@ -15,6 +15,7 @@ export function ConnectSheet({
     onOpenChange: (v: boolean) => void;
     onSelectWallet: (name: string) => void;
 }) {
+    // Note: gating is handled in parent; this sheet remains provider UI only
     const { wallets } = useWallet();
 
     const isMobile = () => {

@@ -7,6 +7,7 @@ import bs58 from 'bs58';
 import { ConnectSheet } from './connect-sheet';
 import { AddressChip } from './address-chip';
 import { toast } from '@/components/toast';
+import { useSession } from 'next-auth/react';
 
 function isMobile() {
     if (typeof navigator === 'undefined') return false;
@@ -14,6 +15,8 @@ function isMobile() {
 }
 
 export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address: string; isVerified: boolean; isPrimary?: boolean }> }) {
+    const { data } = useSession();
+    const isGuest = data?.user?.type === 'guest';
     const { connected, wallet, publicKey, wallets, select, connect, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
     const inFlightRef = useRef(false);
@@ -72,6 +75,10 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
     }, [address, publicKey]);
 
     const connectWallet = useCallback(async (name: string) => {
+        if (isGuest) {
+            toast({ type: 'error', description: 'Sign up to connect a wallet.' });
+            return;
+        }
         try {
             // If already connected to another wallet, disconnect first
             if (connected && wallet?.adapter?.name !== name) {
@@ -90,7 +97,7 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
         } catch (e) {
             toast({ type: 'error', description: 'Unable to open wallet. Check extension/app and try again.' });
         }
-    }, [connected, wallet?.adapter?.name, select, connect, disconnect, wallets]);
+    }, [connected, wallet?.adapter?.name, select, connect, disconnect, wallets, isGuest]);
 
     const [open, setOpen] = useState(false);
     useEffect(() => {
@@ -177,7 +184,13 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
                     </Button>
                 ) : (
                     <>
-                        <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
+                        <Button className="h-8 rounded-md px-3 text-sm" onClick={() => {
+                            if (isGuest) {
+                                toast({ type: 'error', description: 'Sign up to connect a wallet.' });
+                                return;
+                            }
+                            setOpen(true);
+                        }}>Connect Wallet</Button>
                         <ConnectSheet
                             open={open}
                             onOpenChange={setOpen}
