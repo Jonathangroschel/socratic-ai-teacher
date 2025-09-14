@@ -3,23 +3,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import bs58 from 'bs58';
 import { ConnectSheet } from './connect-sheet';
 import { AddressChip } from './address-chip';
 import { toast } from '@/components/toast';
 
-function truncate(addr?: string | null, head = 4, tail = 4) {
-    if (!addr) return '';
-    if (addr.length <= head + tail + 1) return addr;
-    return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
+function isMobile() {
+    if (typeof navigator === 'undefined') return false;
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address: string; isVerified: boolean; isPrimary?: boolean }> }) {
     const { connected, wallet, publicKey, wallets, select, connect, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
-    const [saving, setSaving] = useState(false);
     const inFlightRef = useRef(false);
 
     const address = useMemo(() => publicKey?.toBase58() ?? null, [publicKey]);
@@ -90,6 +86,13 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
             } else {
                 await connect();
             }
+            // Persist last used wallet and enable gentle auto-reconnect
+            try {
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('solana:lastAdapter', name);
+                    localStorage.setItem('solana:autoReconnect', '1');
+                }
+            } catch { }
         } catch (e) {
             toast({ type: 'error', description: 'Unable to open wallet. Check extension/app and try again.' });
         }
@@ -107,29 +110,46 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
         return saved?.some((w) => w.address === a && w.isVerified) || false;
     }, [saved, publicKey]);
 
+    const savedPrimary = useMemo(() => {
+        return saved?.find((w) => w.isPrimary) || saved?.[0] || undefined;
+    }, [saved]);
+
     const displayAddress = useMemo(() => {
         if (connected && publicKey) return publicKey.toBase58();
+        if (!connected && savedPrimary?.address) return savedPrimary.address;
         return null;
-    }, [connected, publicKey]);
+    }, [connected, publicKey, savedPrimary]);
 
-    if (!connected && !displayAddress) {
-        return (
-            <>
-                <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
-                <ConnectSheet
-                    open={open}
-                    onOpenChange={setOpen}
-                    onSelectWallet={(name) => connectWallet(name)}
-                />
-            </>
-        );
-    }
-
-    const actionLabel = !connected && displayAddress ? 'Reconnect Wallet' : 'Connect Wallet';
+    // Gentle optional auto-reconnect on desktop when user previously connected and has a verified primary
+    const attemptedAutoRef = useRef(false);
+    useEffect(() => {
+        if (attemptedAutoRef.current) return;
+        if (connected) return;
+        if (typeof window === 'undefined') return;
+        if (isMobile()) return; // avoid popups on mobile
+        if (!savedPrimary?.isVerified) return;
+        try {
+            const flag = localStorage.getItem('solana:autoReconnect');
+            const last = localStorage.getItem('solana:lastAdapter');
+            if (flag !== '1' || !last) return;
+            const exists = wallets.some((w) => w.adapter.name === last);
+            if (!exists) return;
+            attemptedAutoRef.current = true;
+            // fire and forget; connectWallet handles persistence
+            void connectWallet(last);
+        } catch { }
+    }, [connected, savedPrimary, wallets, connectWallet]);
 
     return (
         <div className="flex flex-wrap items-center gap-2">
-            {displayAddress && <AddressChip address={displayAddress} />}
+            {displayAddress && (
+                <div className="flex items-center gap-2">
+                    <AddressChip address={displayAddress} />
+                    {!connected && savedPrimary?.address === displayAddress && (
+                        <span className="text-xs text-muted-foreground">Saved • Not connected</span>
+                    )}
+                </div>
+            )}
             {connected && !hasVerified && (
                 <Button disabled={verifying || !address} onClick={startVerification} className="h-8 rounded-md px-3 text-sm shrink-0">
                     {verifying ? 'Verifying…' : 'Verify & Save'}
@@ -142,6 +162,12 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
                         try {
                             const current = publicKey?.toBase58();
                             await disconnect();
+                            try {
+                                if (typeof window !== 'undefined') {
+                                    localStorage.removeItem('solana:autoReconnect');
+                                    localStorage.removeItem('solana:lastAdapter');
+                                }
+                            } catch { }
                             // Attempt to remove saved wallet that matches current or primary
                             const target = saved?.find((w) => w.address === current) || saved?.find((w) => w.isPrimary);
                             if (target?.id) {
