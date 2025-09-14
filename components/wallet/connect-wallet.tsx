@@ -16,7 +16,7 @@ function truncate(addr?: string | null, head = 4, tail = 4) {
     return `${addr.slice(0, head)}…${addr.slice(-tail)}`;
 }
 
-export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVerified: boolean; isPrimary?: boolean }> }) {
+export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address: string; isVerified: boolean; isPrimary?: boolean }> }) {
     const { connected, wallet, publicKey, wallets, select, connect, disconnect, connecting, signMessage } = useWallet();
     const [verifying, setVerifying] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -101,21 +101,16 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
         document.addEventListener('wallets:replace', onReplace);
         return () => document.removeEventListener('wallets:replace', onReplace);
     }, []);
-    const savedPrimary = useMemo(() => {
-        if (!saved || saved.length === 0) return null;
-        return saved.find((w) => w.isVerified && w.isPrimary) || saved.find((w) => w.isVerified) || saved[0] || null;
-    }, [saved]);
-
     const hasVerified = useMemo(() => {
-        if (!publicKey) return Boolean(savedPrimary);
+        if (!publicKey) return false;
         const a = publicKey.toBase58();
         return saved?.some((w) => w.address === a && w.isVerified) || false;
-    }, [saved, publicKey, savedPrimary]);
+    }, [saved, publicKey]);
 
     const displayAddress = useMemo(() => {
         if (connected && publicKey) return publicKey.toBase58();
-        return savedPrimary?.address ?? null;
-    }, [connected, publicKey, savedPrimary]);
+        return null;
+    }, [connected, publicKey]);
 
     if (!connected && !displayAddress) {
         return (
@@ -141,12 +136,27 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
                 </Button>
             )}
             {connected ? (
-                <Button variant="ghost" onClick={() => disconnect()} className="h-8 rounded-md px-3 text-sm shrink-0">
+                <Button
+                    variant="ghost"
+                    onClick={async () => {
+                        try {
+                            const current = publicKey?.toBase58();
+                            await disconnect();
+                            // Attempt to remove saved wallet that matches current or primary
+                            const target = saved?.find((w) => w.address === current) || saved?.find((w) => w.isPrimary);
+                            if (target?.id) {
+                                await fetch(`/api/wallets/${target.id}`, { method: 'DELETE' });
+                                document.dispatchEvent(new CustomEvent('wallets:changed'));
+                            }
+                        } catch { }
+                    }}
+                    className="h-8 rounded-md px-3 text-sm shrink-0"
+                >
                     Disconnect
                 </Button>
             ) : (
                 <>
-                    <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>{actionLabel}</Button>
+                    <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
                     <ConnectSheet
                         open={open}
                         onOpenChange={setOpen}
