@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletReadyState } from '@solana/wallet-adapter-base';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 
@@ -16,12 +17,55 @@ export function ConnectSheet({
 }) {
     const { wallets } = useWallet();
 
+    const isMobile = () => {
+        if (typeof navigator === 'undefined') return false;
+        return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    };
+
+    const openInstall = (walletName: string) => {
+        const uaIsMobile = isMobile();
+        const href =
+            walletName === 'Phantom'
+                ? uaIsMobile
+                    ? 'https://phantom.app/ul/'
+                    : 'https://phantom.app/'
+                : walletName === 'Solflare'
+                    ? 'https://solflare.com/'
+                    : 'https://solana.com/ecosystem/wallets';
+        window.open(href, '_blank', 'noopener');
+    };
+
+    const openInPhantomApp = () => {
+        try {
+            const current = typeof window !== 'undefined' ? window.location.href : '';
+            const link = `https://phantom.app/ul/browse/${encodeURIComponent(current)}`;
+            window.location.href = link;
+        } catch {
+            window.open('https://phantom.app/', '_blank', 'noopener');
+        }
+    };
+
     const handlePick = useCallback(
         (name: string) => {
-            onOpenChange(false);
-            onSelectWallet(name);
+            const w = wallets.find((x) => x.adapter.name === name);
+            const ready = w?.adapter.readyState;
+            // If installed, proceed to connect
+            if (ready === WalletReadyState.Installed || ready === WalletReadyState.Loadable) {
+                onOpenChange(false);
+                onSelectWallet(name);
+                return;
+            }
+
+            // Mobile-friendly fallbacks
+            if (name === 'Phantom' && isMobile()) {
+                onOpenChange(false);
+                openInPhantomApp();
+                return;
+            }
+
+            openInstall(name);
         },
-        [onOpenChange, onSelectWallet],
+        [wallets, onOpenChange, onSelectWallet],
     );
 
     return (
@@ -46,6 +90,9 @@ export function ConnectSheet({
                                 <img src={w.adapter.icon} alt="" className="size-5 rounded" />
                             )}
                             <span className="flex-1 text-left">{w.adapter.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                                {w.adapter.readyState === WalletReadyState.Installed ? 'Installed' : isMobile() && w.adapter.name === 'Phantom' ? 'Open App' : 'Install'}
+                            </span>
                         </Button>
                     ))}
                 </div>
