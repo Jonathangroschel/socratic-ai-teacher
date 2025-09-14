@@ -1128,8 +1128,9 @@ export async function verifyWalletSignature({
 
     // Upsert wallet as verified; mark primary if none
     const existing = await getUserWallets({ userId });
-    const makePrimary = existing.length === 0;
-    await upsertUserWallet({ userId, chain: 'solana', address, isVerified: true, makePrimary });
+    // Make the verified address primary to reflect the latest user choice
+    const makePrimary = true;
+    await upsertUserWallet({ userId, chain: 'solana', address, isVerified: true, makePrimary, lastConnectedAt: new Date() });
 
     // Invalidate nonce after successful verification
     await db
