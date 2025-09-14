@@ -81,13 +81,19 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
             if (connected && wallet?.adapter?.name !== name) {
                 await disconnect();
             }
+            const target = wallets.find((w) => w.adapter.name === name)?.adapter;
             await select(name as any);
-            // Explicitly connect (autoConnect is disabled)
-            await connect();
+            // Let provider update selected wallet this tick
+            await Promise.resolve();
+            if (target?.connect) {
+                await target.connect();
+            } else {
+                await connect();
+            }
         } catch (e) {
             toast({ type: 'error', description: 'Unable to open wallet. Check extension/app and try again.' });
         }
-    }, [connected, wallet?.adapter?.name, select, connect, disconnect]);
+    }, [connected, wallet?.adapter?.name, select, connect, disconnect, wallets]);
 
     const [open, setOpen] = useState(false);
     useEffect(() => {
@@ -124,6 +130,8 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
         );
     }
 
+    const actionLabel = !connected && displayAddress ? 'Reconnect Wallet' : 'Connect Wallet';
+
     return (
         <div className="flex flex-wrap items-center gap-2">
             {displayAddress && <AddressChip address={displayAddress} />}
@@ -138,7 +146,7 @@ export function ConnectWallet({ saved }: { saved?: Array<{ address: string; isVe
                 </Button>
             ) : (
                 <>
-                    <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
+                    <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>{actionLabel}</Button>
                     <ConnectSheet
                         open={open}
                         onOpenChange={setOpen}
