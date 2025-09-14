@@ -86,13 +86,7 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
             } else {
                 await connect();
             }
-            // Persist last used wallet and enable gentle auto-reconnect
-            try {
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('solana:lastAdapter', name);
-                    localStorage.setItem('solana:autoReconnect', '1');
-                }
-            } catch { }
+            // No auto-reconnect persistence; only connect on explicit user action
         } catch (e) {
             toast({ type: 'error', description: 'Unable to open wallet. Check extension/app and try again.' });
         }
@@ -120,25 +114,7 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
         return null;
     }, [connected, publicKey, savedPrimary]);
 
-    // Gentle optional auto-reconnect on desktop when user previously connected and has a verified primary
-    const attemptedAutoRef = useRef(false);
-    useEffect(() => {
-        if (attemptedAutoRef.current) return;
-        if (connected) return;
-        if (typeof window === 'undefined') return;
-        if (isMobile()) return; // avoid popups on mobile
-        if (!savedPrimary?.isVerified) return;
-        try {
-            const flag = localStorage.getItem('solana:autoReconnect');
-            const last = localStorage.getItem('solana:lastAdapter');
-            if (flag !== '1' || !last) return;
-            const exists = wallets.some((w) => w.adapter.name === last);
-            if (!exists) return;
-            attemptedAutoRef.current = true;
-            // fire and forget; connectWallet handles persistence
-            void connectWallet(last);
-        } catch { }
-    }, [connected, savedPrimary, wallets, connectWallet]);
+    // Auto-reconnect disabled: never initiate a connection without explicit user action
 
     return (
         <div className="flex flex-wrap items-center gap-2">
