@@ -145,9 +145,6 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
             {displayAddress && (
                 <div className="flex items-center gap-2">
                     <AddressChip address={displayAddress} />
-                    {!connected && savedPrimary?.address === displayAddress && (
-                        <span className="text-xs text-muted-foreground">Saved • Not connected</span>
-                    )}
                 </div>
             )}
             {connected && !hasVerified && (
@@ -181,14 +178,37 @@ export function ConnectWallet({ saved }: { saved?: Array<{ id?: string; address:
                     Disconnect
                 </Button>
             ) : (
-                <>
-                    <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
-                    <ConnectSheet
-                        open={open}
-                        onOpenChange={setOpen}
-                        onSelectWallet={(name) => connectWallet(name)}
-                    />
-                </>
+                savedPrimary ? (
+                    <Button
+                        variant="ghost"
+                        onClick={async () => {
+                            try {
+                                try {
+                                    if (typeof window !== 'undefined') {
+                                        localStorage.removeItem('solana:autoReconnect');
+                                        localStorage.removeItem('solana:lastAdapter');
+                                    }
+                                } catch { }
+                                if (savedPrimary?.id) {
+                                    await fetch(`/api/wallets/${savedPrimary.id}`, { method: 'DELETE' });
+                                    document.dispatchEvent(new CustomEvent('wallets:changed'));
+                                }
+                            } catch { }
+                        }}
+                        className="h-8 rounded-md px-3 text-sm shrink-0"
+                    >
+                        Disconnect
+                    </Button>
+                ) : (
+                    <>
+                        <Button className="h-8 rounded-md px-3 text-sm" onClick={() => setOpen(true)}>Connect Wallet</Button>
+                        <ConnectSheet
+                            open={open}
+                            onOpenChange={setOpen}
+                            onSelectWallet={(name) => connectWallet(name)}
+                        />
+                    </>
+                )
             )}
         </div>
     );
