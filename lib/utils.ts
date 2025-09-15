@@ -94,7 +94,21 @@ export function getTrailingMessageId({
 }
 
 export function sanitizeText(text: string) {
-  return text.replace('<has_function_call>', '');
+  let sanitized = text.replace('<has_function_call>', '');
+
+  // Hide assistant memory blocks from UI rendering
+  // Remove blocks starting with "🧠 Memory update:", "🧠 Memory — Review candidates", or "🧠 Memory — Session log"
+  const patterns: RegExp[] = [
+    /🧠\s*Memory\s*update:\s*[\s\S]*?(?:\n\s*\n|$)/g,
+    /🧠\s*Memory\s*—\s*Review candidates[\s\S]*?(?:\n\s*\n|$)/g,
+    /🧠\s*Memory\s*—\s*Session log:[\s\S]*?(?:\n\s*\n|$)/g,
+  ];
+
+  for (const re of patterns) {
+    sanitized = sanitized.replace(re, '');
+  }
+
+  return sanitized;
 }
 
 export function convertToUIMessages(messages: DBMessage[]): ChatMessage[] {
