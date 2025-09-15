@@ -42,6 +42,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   const cookieStore = await cookies();
   const chatModelFromCookie = cookieStore.get('chat-model');
+  const hasVisited = Boolean(cookieStore.get('poly_visited'));
 
   if (!chatModelFromCookie) {
     return (
@@ -55,6 +56,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           session={session}
           autoResume={true}
           initialLastContext={chat.lastContext ?? undefined}
+          isReturningVisitor={hasVisited}
         />
         <DataStreamHandler />
       </>
@@ -72,6 +74,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         session={session}
         autoResume={true}
         initialLastContext={chat.lastContext ?? undefined}
+        isReturningVisitor={hasVisited}
       />
       <DataStreamHandler />
     </>

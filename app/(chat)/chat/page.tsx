@@ -31,6 +31,8 @@ export default async function Page() {
 
   const id = generateUUID();
 
+  const hasVisited = Boolean(cookies().get('poly_visited'));
+
   // Always use the default chat model for the product experience.
   // We intentionally ignore any previously stored model selection.
   return (
@@ -44,6 +46,7 @@ export default async function Page() {
         isReadonly={false}
         session={session}
         autoResume={false}
+        isReturningVisitor={hasVisited}
       />
       <DataStreamHandler />
     </>

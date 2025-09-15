@@ -14,7 +14,17 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
+    const hasVisited = Boolean(request.cookies.get('poly_visited'));
+    const res = NextResponse.next();
+    if (!hasVisited) {
+      res.cookies.set('poly_visited', '1', {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+    }
+    return res;
   }
 
   const token = await getToken({
@@ -23,21 +33,49 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
+  const hasVisited = Boolean(request.cookies.get('poly_visited'));
+
   if (!token) {
     const redirectUrl = encodeURIComponent(request.url);
-
-    return NextResponse.redirect(
+    const redirectResponse = NextResponse.redirect(
       new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url),
     );
+    if (!hasVisited) {
+      redirectResponse.cookies.set('poly_visited', '1', {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+    }
+    return redirectResponse;
   }
 
   const isGuest = guestRegex.test(token?.email ?? '');
 
   if (token && !isGuest && ['/login', '/register'].includes(pathname)) {
-    return NextResponse.redirect(new URL('/', request.url));
+    const redirectResponse = NextResponse.redirect(new URL('/', request.url));
+    if (!hasVisited) {
+      redirectResponse.cookies.set('poly_visited', '1', {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+    }
+    return redirectResponse;
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  if (!hasVisited) {
+    res.cookies.set('poly_visited', '1', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+      secure: !isDevelopmentEnvironment,
+    });
+  }
+  return res;
 }
 
 export const config = {

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-export const Greeting = () => {
+export const Greeting = ({ isReturningVisitor }: { isReturningVisitor?: boolean }) => {
   return (
     <div
       key="overview"
@@ -13,7 +13,7 @@ export const Greeting = () => {
         transition={{ delay: 0.5 }}
         className="text-xl md:text-2xl font-semibold"
       >
-        Welcome to Polymatic!
+        {isReturningVisitor ? 'Welcome back to Polymatic!' : 'Welcome to Polymatic!'}
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
