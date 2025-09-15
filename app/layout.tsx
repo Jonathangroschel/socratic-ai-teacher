@@ -32,6 +32,7 @@ const geistMono = Geist_Mono({
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
+  weight: ['700'],
   variable: '--font-inter',
 });
 
