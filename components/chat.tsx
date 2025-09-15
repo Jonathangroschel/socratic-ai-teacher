@@ -32,6 +32,7 @@ export function Chat({
   session,
   autoResume,
   initialLastContext,
+  isReturningVisitor,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -41,6 +42,7 @@ export function Chat({
   session: Session;
   autoResume: boolean;
   initialLastContext?: LanguageModelUsage;
+  isReturningVisitor?: boolean;
 }) {
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -156,6 +158,7 @@ export function Chat({
           isReadonly={isReadonly}
           isArtifactVisible={isArtifactVisible}
           selectedModelId={initialChatModel}
+          isReturningVisitor={isReturningVisitor}
         />
 
         <div className="sticky bottom-0 flex gap-2 px-2 md:px-4 pb-3 md:pb-4 mx-auto w-full bg-background max-w-4xl z-[1] border-t-0">
