@@ -14,12 +14,22 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/api/auth')) {
-    const hasVisited = Boolean(request.cookies.get('poly_visited'));
     const res = NextResponse.next();
-    if (!hasVisited) {
-      res.cookies.set('poly_visited', '1', {
+    // First-visit/session cookies
+    const visitedBefore = Boolean(
+      request.cookies.get('poly_has_visited_before') ||
+      request.cookies.get('poly_visited'),
+    );
+    if (!visitedBefore) {
+      res.cookies.set('poly_has_visited_before', '1', {
         path: '/',
         maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+      // Session cookie (no maxAge) marks this whole browser session as the first visit
+      res.cookies.set('poly_first_session', '1', {
+        path: '/',
         sameSite: 'lax',
         secure: !isDevelopmentEnvironment,
       });
@@ -33,17 +43,25 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
-  const hasVisited = Boolean(request.cookies.get('poly_visited'));
+  const visitedBefore = Boolean(
+    request.cookies.get('poly_has_visited_before') ||
+    request.cookies.get('poly_visited'),
+  );
 
   if (!token) {
     const redirectUrl = encodeURIComponent(request.url);
     const redirectResponse = NextResponse.redirect(
       new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url),
     );
-    if (!hasVisited) {
-      redirectResponse.cookies.set('poly_visited', '1', {
+    if (!visitedBefore) {
+      redirectResponse.cookies.set('poly_has_visited_before', '1', {
         path: '/',
         maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+      redirectResponse.cookies.set('poly_first_session', '1', {
+        path: '/',
         sameSite: 'lax',
         secure: !isDevelopmentEnvironment,
       });
@@ -55,10 +73,15 @@ export async function middleware(request: NextRequest) {
 
   if (token && !isGuest && ['/login', '/register'].includes(pathname)) {
     const redirectResponse = NextResponse.redirect(new URL('/', request.url));
-    if (!hasVisited) {
-      redirectResponse.cookies.set('poly_visited', '1', {
+    if (!visitedBefore) {
+      redirectResponse.cookies.set('poly_has_visited_before', '1', {
         path: '/',
         maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+      redirectResponse.cookies.set('poly_first_session', '1', {
+        path: '/',
         sameSite: 'lax',
         secure: !isDevelopmentEnvironment,
       });
@@ -67,10 +90,15 @@ export async function middleware(request: NextRequest) {
   }
 
   const res = NextResponse.next();
-  if (!hasVisited) {
-    res.cookies.set('poly_visited', '1', {
+  if (!visitedBefore) {
+    res.cookies.set('poly_has_visited_before', '1', {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+      secure: !isDevelopmentEnvironment,
+    });
+    res.cookies.set('poly_first_session', '1', {
+      path: '/',
       sameSite: 'lax',
       secure: !isDevelopmentEnvironment,
     });
