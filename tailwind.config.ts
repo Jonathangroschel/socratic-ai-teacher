@@ -12,6 +12,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-geist)'],
+        inter: ['var(--font-inter)'],
         mono: ['var(--font-geist-mono)'],
       },
       screens: {
