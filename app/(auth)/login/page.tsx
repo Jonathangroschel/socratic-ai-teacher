@@ -60,7 +60,7 @@ export default function Page() {
           className="absolute inset-0"
           style={{
             backgroundImage:
-              "url('https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/Untitled%20design%20(25).webp')",
+              "url('https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/Untitled%20design%20(26).webp')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
