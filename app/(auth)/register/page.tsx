@@ -55,16 +55,21 @@ export default function Page() {
   };
 
   return (
-    <div
-      className="flex h-dvh w-screen items-start pt-12 md:pt-0 md:items-center justify-center"
-      style={{
-        backgroundImage:
-          'url(\u0040https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/Untitled%20design%20(25).webp)'.replace('@', ''),
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
+    <div className="relative flex h-dvh w-screen items-start pt-12 md:pt-0 md:items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 -z-10">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "url('https://fvyhcmnnqnsfmguhexhr.supabase.co/storage/v1/object/public/icon/Untitled%20design%20(25).webp')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-black/55" aria-hidden />
+      </div>
       <div className="w-full max-w-md overflow-hidden rounded-2xl gap-12 flex flex-col">
         <div className="flex flex-col items-center justify-center gap-2 px-4 text-center sm:px-16">
           <h3 className="text-xl font-semibold dark:text-zinc-50">Sign Up</h3>
