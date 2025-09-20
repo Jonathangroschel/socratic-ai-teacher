@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import './globals.css';
 import { SessionProvider } from 'next-auth/react';
+import PostHogInit from './posthog-init';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.vercel.ai'),
@@ -79,6 +80,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <PostHogInit />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
