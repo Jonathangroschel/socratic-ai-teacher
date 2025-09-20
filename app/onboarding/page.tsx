@@ -207,7 +207,7 @@ export default function OnboardingPage() {
           <section className="flex flex-col gap-4">
             <div className="text-lg text-muted-foreground">Time budget and goals</div>
             <div className="flex gap-2">
-              {[20, 30, 40].map((mins) => (
+              {[10, 20, 30, 40].map((mins) => (
                 <Button
                   key={mins}
                   variant={timeBudget === mins ? 'default' : 'outline'}
