@@ -25,7 +25,7 @@ function PureSuggestedActions({
     profile?.interests?.flatMap((c: any) => c.topics) ?? [];
   const fallback = [
     'Start my daily session',
-    'Teach me something useful in 20 minutes',
+    'Teach me something useful in 10 minutes',
     'Warm-up quiz to begin today',
     'Review yesterday\'s concepts',
   ];
@@ -34,38 +34,38 @@ function PureSuggestedActions({
   const suggestedActions =
     topPicks.length >= 2
       ? [
-          `Kick off with: ${topPicks[0]}`,
-          `Quick explainer then quiz on: ${topPicks[1]}`,
-          topPicks[2] ? `5-min micro-task: ${topPicks[2]}` : fallback[2],
-          fallback[0],
-        ]
+        `Kick off with: ${topPicks[0]}`,
+        `Quick explainer then quiz on: ${topPicks[1]}`,
+        topPicks[2] ? `5-min micro-task: ${topPicks[2]}` : fallback[2],
+        fallback[0],
+      ]
       : fallback;
 
   return (
     <div data-testid="suggested-actions" className="grid sm:grid-cols-2 gap-2 w-full">
-        {suggestedActions.map((suggestedAction, index) => (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ delay: 0.05 * index }}
-            key={suggestedAction}
+      {suggestedActions.map((suggestedAction, index) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ delay: 0.05 * index }}
+          key={suggestedAction}
+        >
+          <Suggestion
+            suggestion={suggestedAction}
+            onClick={(suggestion) => {
+              window.history.replaceState({}, '', `/chat/${chatId}`);
+              sendMessage({
+                role: 'user',
+                parts: [{ type: 'text', text: suggestion }],
+              });
+            }}
+            className="text-left w-full h-auto whitespace-normal p-3"
           >
-            <Suggestion
-              suggestion={suggestedAction}
-              onClick={(suggestion) => {
-                window.history.replaceState({}, '', `/chat/${chatId}`);
-                sendMessage({
-                  role: 'user',
-                  parts: [{ type: 'text', text: suggestion }],
-                });
-              }}
-              className="text-left w-full h-auto whitespace-normal p-3"
-            >
-              {suggestedAction}
-            </Suggestion>
-          </motion.div>
-        ))}
+            {suggestedAction}
+          </Suggestion>
+        </motion.div>
+      ))}
     </div>
   );
 }
