@@ -99,7 +99,10 @@ export function sanitizeText(text: string) {
   // Hide assistant memory blocks from UI rendering
   // Remove blocks starting with "🧠 Memory update:", "🧠 Memory — Review candidates", or "🧠 Memory — Session log"
   const patterns: RegExp[] = [
+    // Match multi-line Memory update blocks ending with a blank line OR end of string
     /🧠\s*Memory\s*update:\s*[\s\S]*?(?:\n\s*\n|$)/g,
+    // Also match single-line Memory update entries (e.g., when model outputs only one line)
+    /🧠\s*Memory\s*update:[^\n]*(?:\n|$)/g,
     /🧠\s*Memory\s*—\s*Review candidates[\s\S]*?(?:\n\s*\n|$)/g,
     /🧠\s*Memory\s*—\s*Session log:[\s\S]*?(?:\n\s*\n|$)/g,
   ];
