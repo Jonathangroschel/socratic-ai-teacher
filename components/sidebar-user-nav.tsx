@@ -104,13 +104,6 @@ export function SidebarUserNav({ user }: { user: User }) {
               Learning preferences
             </DropdownMenuItem>
             <DropdownMenuItem
-              data-testid="user-nav-item-theme"
-              className="cursor-pointer"
-              onSelect={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            >
-              {`Toggle ${resolvedTheme === 'light' ? 'dark' : 'light'} mode`}
-            </DropdownMenuItem>
-            <DropdownMenuItem
               data-testid="user-nav-item-learn-more"
               className="cursor-pointer"
               onSelect={() => {
@@ -123,6 +116,13 @@ export function SidebarUserNav({ user }: { user: User }) {
               }}
             >
               Learn more
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="user-nav-item-theme"
+              className="cursor-pointer"
+              onSelect={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            >
+              {`Toggle ${resolvedTheme === 'light' ? 'dark' : 'light'} mode`}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
