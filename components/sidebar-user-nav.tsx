@@ -110,6 +110,20 @@ export function SidebarUserNav({ user }: { user: User }) {
             >
               {`Toggle ${resolvedTheme === 'light' ? 'dark' : 'light'} mode`}
             </DropdownMenuItem>
+            <DropdownMenuItem
+              data-testid="user-nav-item-learn-more"
+              className="cursor-pointer"
+              onSelect={() => {
+                window.open('https://polymatic-1.gitbook.io/polymatic', '_blank', 'noopener,noreferrer');
+                if (isMobile) {
+                  setOpenMobile(false);
+                } else {
+                  setOpen(false);
+                }
+              }}
+            >
+              Learn more
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
               <button
