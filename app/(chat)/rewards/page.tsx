@@ -87,8 +87,38 @@ export default function RewardsPage() {
             <div className="mt-2 text-xs text-muted-foreground">
               Last 30 days. Hover bars to view day totals.
             </div>
+            <div className="mt-4 rounded-md border bg-muted/25 p-3 text-sm text-muted-foreground">
+              You’re earning points that convert into <span className="font-medium">$LTERN</span> tokens.
+              <span className="ml-2">
+                <a
+                  href="https://polymatic-1.gitbook.io/polymatic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-4 hover:text-foreground"
+                >
+                  Learn More About $LTERN
+                </a>
+              </span>
+            </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Mobile: show an inline banner under cards */}
+      <div className="md:hidden mt-4">
+        <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+          You’re earning points that convert into <span className="font-medium">$LTERN</span> tokens.
+          <div>
+            <a
+              href="https://polymatic-1.gitbook.io/polymatic"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4 hover:text-foreground"
+            >
+              Learn More About $LTERN
+            </a>
+          </div>
+        </div>
       </div>
 
       <div className="mt-4 md:mt-6 max-w-[396px] md:max-w-none mx-auto">

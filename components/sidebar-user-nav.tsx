@@ -104,20 +104,6 @@ export function SidebarUserNav({ user }: { user: User }) {
               Learning preferences
             </DropdownMenuItem>
             <DropdownMenuItem
-              data-testid="user-nav-item-learn-more"
-              className="cursor-pointer"
-              onSelect={() => {
-                window.open('https://polymatic-1.gitbook.io/polymatic', '_blank', 'noopener,noreferrer');
-                if (isMobile) {
-                  setOpenMobile(false);
-                } else {
-                  setOpen(false);
-                }
-              }}
-            >
-              Learn more
-            </DropdownMenuItem>
-            <DropdownMenuItem
               data-testid="user-nav-item-theme"
               className="cursor-pointer"
               onSelect={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
