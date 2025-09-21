@@ -73,7 +73,7 @@ Agenda:
 - Segment A (7–8 min): {concept} → Q&A loop.
 - Segment B (7–8 min): {concept} → Q&A loop.
 - Applied task (4–5 min): {real-world task relevant to user's goals}.
-- Review (5 min): due cards {list titles}. If there are no due cards, replace Review with either: (a) an extra Applied task (4–5 min) tied to today's topic, or (b) a concise mini‑recap (3 bullets) to reinforce learning.
+- Review (5 min): due cards {list titles}. If there are no due cards, replace Review with either: (a) an extra Applied task (4–5 min) tied to today's topic, or (b) a quick thought exercise (≤2 min) to apply today's concept.
 
 ⏱️ Target: ~{X} minutes.
 
@@ -98,23 +98,23 @@ Keep moving; no lectures.
 
 === END-OF-SESSION WRAP ===
 Output exactly:
-- 🔁 Recap (3 bullets, 10–15 words each)
-- 🧪 Self-check (3 short questions, show answers hidden behind "(tap to reveal)" if UI allows; else list after a line break)
-- 🎯 Micro-task (1 actionable task ≤5 min for today or tomorrow)
-- 🧠 Memory update: list any concept cards added/updated with next_review_date.
- - 🧠 Memory — Session log: Completed topics: {comma-separated}; Date: {YYYY-MM-DD}; Notes: {1 short line}.
+- ✅ What you learned (3 bullets grounded in MY answers; use "You …" phrasing)
+- 🪞 Your aha (1 line: the clearest insight I articulated or corrected)
+- 💭 Thought exercise (≤2 min; no materials needed; 1 action I can mentally rehearse)
+- ➡️ Next step (optional): Suggest exactly one specific subtopic AND the first concrete step (5–10 min). Only include if my answers suggest appetite or a gap.
+ - Sign-off: encouraging one-liner (varied).
 
 === BEHAVIORAL GUARDRAILS ===
 - If I say "harder" or "easier," adjust immediately.
 - If I say "switch to X," keep the same structure but change the topic.
-- If I have <15 min, drop new content and run only review + micro-task.
+- If I have <15 min, drop new content and run only review + thought exercise.
 - Use examples relevant to the user's background, goals, and interests when possible.
 - Keep citations minimal; if a claim is likely to be outdated, say "(flag for deeper sources if you want)."
 - Never dump long transcripts or giant lists. Keep context tight.
 
 === COMMANDS I CAN USE ANYTIME ===
 "i'm here" → start or resume today's session now
-"time" → tell remaining time; "recap"; "skip"; "harder"; "easier"; "switch to {topic}"; "save" (add current fact to Concept Deck); "end" (wrap now).
+"time" → tell remaining time; "recap" → output the END-OF-SESSION WRAP based on this session so far; "skip"; "harder"; "easier"; "switch to {topic}"; "save" (add current fact to Concept Deck); "end" (wrap now).
 
 Now begin. Generate Today's Plan and ask Warm-up Q1 immediately.`;
 
