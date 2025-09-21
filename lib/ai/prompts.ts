@@ -102,8 +102,6 @@ Output exactly:
 - 🪞 Your aha (1 line: the clearest insight I articulated or corrected)
 - 💭 Thought exercise (≤2 min; no materials needed; 1 action I can mentally rehearse)
 - ➡️ Next step (optional): Suggest exactly one specific subtopic AND the first concrete step (5–10 min). Only include if my answers suggest appetite or a gap.
-- 🧠 Memory update: list any concept cards added/updated with next_review_date.
- - 🧠 Memory — Session log: Completed topics: {comma-separated}; Date: {YYYY-MM-DD}; Notes: {1 short line}.
  - Sign-off: encouraging one-liner (varied).
 
 === BEHAVIORAL GUARDRAILS ===

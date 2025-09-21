@@ -99,17 +99,27 @@ export function sanitizeText(text: string) {
   // Hide assistant memory blocks from UI rendering
   // Remove blocks starting with "🧠 Memory update:", "🧠 Memory — Review candidates", or "🧠 Memory — Session log"
   const patterns: RegExp[] = [
-    // Match multi-line Memory update blocks ending with a blank line OR end of string
-    /🧠\s*Memory\s*update:\s*[\s\S]*?(?:\n\s*\n|$)/g,
-    // Also match single-line Memory update entries (e.g., when model outputs only one line)
-    /🧠\s*Memory\s*update:[^\n]*(?:\n|$)/g,
+    // Remove the Memory update header line (with or without colon) plus any immediate blank lines
+    /(^|\n)🧠\s*Memory\s*update\s*:?[ \t]*\n(?:\s*\n)*/g,
+    // Remove full Review candidates blocks
     /🧠\s*Memory\s*—\s*Review candidates[\s\S]*?(?:\n\s*\n|$)/g,
-    /🧠\s*Memory\s*—\s*Session log:[\s\S]*?(?:\n\s*\n|$)/g,
+    // Remove full Session log blocks (colon optional)
+    /🧠\s*Memory\s*—\s*Session log:?[\s\S]*?(?:\n\s*\n|$)/g,
   ];
 
   for (const re of patterns) {
     sanitized = sanitized.replace(re, '');
   }
+
+  // For any remaining lines that include next_review_date, strip the memory card content
+  // while preserving any trailing text after the date on the same line (e.g., sign-off).
+  sanitized = sanitized.replace(
+    /^(.*?\bnext_review_date:[^\n]*)(.*)$/gm,
+    (_match, _left, right) => (right || '').replace(/^\s+/, ''),
+  );
+
+  // Collapse 3+ consecutive blank lines to at most 2 for neatness
+  sanitized = sanitized.replace(/\n{3,}/g, '\n\n');
 
   return sanitized;
 }
