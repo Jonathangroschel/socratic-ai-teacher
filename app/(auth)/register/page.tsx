@@ -43,6 +43,8 @@ export default function Page() {
 
       setIsSuccessful(true);
       updateSession();
+      // Grant one-time signup bonus (best-effort)
+      fetch('/api/rewards/account-bonus', { method: 'POST', credentials: 'include' }).catch(() => { });
       // Redirect to the chat page instead of just refreshing
       didNavigateRef.current = true;
       router.push('/chat');
