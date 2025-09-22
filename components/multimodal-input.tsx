@@ -18,6 +18,7 @@ import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
+import { AccountNudgePill } from './account-nudge-pill';
 import { SuggestedActions } from './suggested-actions';
 import {
   PromptInput,
@@ -57,6 +58,7 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   usage,
+  nudge,
 }: {
   chatId: string;
   input: string;
@@ -72,6 +74,7 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   usage?: LanguageModelUsage;
+  nudge?: { visible: boolean; todayTotal: number; onClose: () => void };
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -334,6 +337,13 @@ function PureMultimodalInput({
               status={status}
               selectedModelId={selectedModelId}
             />
+            {nudge?.visible && (
+              <AccountNudgePill
+                visible={nudge.visible}
+                todayTotal={nudge.todayTotal}
+                onClose={nudge.onClose}
+              />
+            )}
             {/* Model selector hidden for product simplicity. */}
           </PromptInputTools>
 

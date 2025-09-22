@@ -22,6 +22,7 @@ import { useAutoResume } from '@/hooks/use-auto-resume';
 import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
+import { AccountNudgeBanner } from './account-nudge-banner';
 
 export function Chat({
   id,
@@ -56,6 +57,9 @@ export function Chat({
   const [usage, setUsage] = useState<LanguageModelUsage | undefined>(
     initialLastContext,
   );
+  const [messageCountThisSession, setMessageCountThisSession] = useState(0);
+  const [showAccountNudge, setShowAccountNudge] = useState(false);
+  const [todayRewardTotal, setTodayRewardTotal] = useState<number>(0);
 
   const {
     messages,
@@ -91,6 +95,11 @@ export function Chat({
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       if (dataPart.type === 'data-usage') {
         setUsage(dataPart.data);
+      }
+      if (dataPart.type === 'data-reward') {
+        const { todayTotal, delta } = dataPart.data as any;
+        if (typeof todayTotal === 'number') setTodayRewardTotal(todayTotal);
+        else if (typeof delta === 'number') setTodayRewardTotal((t) => t + delta);
       }
     },
     onFinish: () => {
@@ -138,6 +147,29 @@ export function Chat({
     setMessages,
   });
 
+  // Track user messages this session for nudge triggering (guest-only handled server via middleware, but we just show UI)
+  useEffect(() => {
+    const userMsgs = messages.filter((m) => m.role === 'user').length;
+    setMessageCountThisSession(userMsgs);
+  }, [messages]);
+
+  useEffect(() => {
+    // Conditions: at least 2 user messages; not readonly; snooze rules
+    if (isReadonly) return;
+    if (messageCountThisSession < 2) return;
+    // snooze key
+    const last = localStorage.getItem('accountNudge:last');
+    const lastAt = last ? Number(last) : 0;
+    const twelveHours = 12 * 60 * 60 * 1000;
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const lifetime = 0; // optional future: fetch lifetime
+    const snooze = lifetime >= 10000 ? twelveHours : twentyFourHours;
+    if (Date.now() - lastAt < snooze) return;
+    // Don’t show while streaming
+    if (status === 'streaming' || status === 'submitted') return;
+    setShowAccountNudge(true);
+  }, [messageCountThisSession, isReadonly, status]);
+
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background touch-pan-y overscroll-behavior-contain">
@@ -177,6 +209,14 @@ export function Chat({
               selectedVisibilityType={visibilityType}
               selectedModelId={initialChatModel}
               usage={usage}
+              nudge={showAccountNudge ? {
+                visible: true,
+                todayTotal: todayRewardTotal,
+                onClose: () => {
+                  setShowAccountNudge(false);
+                  localStorage.setItem('accountNudge:last', String(Date.now()));
+                }
+              } : undefined}
             />
           )}
         </div>

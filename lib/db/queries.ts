@@ -188,6 +188,19 @@ export async function getTodayRewardTotalByUserId(userId: string) {
   }
 }
 
+export async function hasRewardReasonByUserId({ userId, reason }: { userId: string; reason: string }) {
+  try {
+    const rows = await db
+      .select({ id: rewardTransaction.id })
+      .from(rewardTransaction)
+      .where(and(eq(rewardTransaction.userId, userId), eq(rewardTransaction.reason, reason)))
+      .limit(1);
+    return rows.length > 0;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to check reward by reason');
+  }
+}
+
 /**
  * Rewards summary helpers
  */
