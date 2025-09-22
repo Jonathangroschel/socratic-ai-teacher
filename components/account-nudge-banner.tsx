@@ -24,30 +24,38 @@ export function AccountNudgeBanner({
     if (!visible) return null;
 
     return (
-        <div
-            className={cn(
-                'mx-auto w-full max-w-4xl px-2 md:px-4 mb-2',
-            )}
-        >
-            <div className="relative rounded-xl border bg-gradient-to-r from-primary/5 to-transparent p-3 md:p-4">
-                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-                    <div className="text-sm md:text-base text-muted-foreground">
+        <div className={cn('w-full')}>
+            <div
+                className={cn(
+                    'mx-auto w-full max-w-4xl',
+                    'rounded-lg border border-border/60 bg-background/75 shadow-sm',
+                    'backdrop-blur supports-[backdrop-filter]:backdrop-blur-md',
+                    'px-3 py-2 md:px-4 md:py-2'
+                )}
+            >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                         <span className="font-medium text-foreground">Save your earnings</span>
                         {typeof todayTotal === 'number' && todayTotal > 0 ? (
                             <>
-                                {' '}– you have {new Intl.NumberFormat().format(todayTotal)} points today. Create an account now and get an extra <span className="font-semibold">1,000‑point bonus</span>.
+                                {' '}— you have {new Intl.NumberFormat().format(todayTotal)} points today. Create an account and get a <span className="font-semibold">1,000‑point bonus</span>.
                             </>
                         ) : (
-                            <> – create an account and get a <span className="font-semibold">1,000‑point bonus</span>.</>
+                            <> — create an account and get a <span className="font-semibold">1,000‑point bonus</span>.</>
                         )}
                     </div>
-                    <div className="flex items-center gap-2 md:ml-auto">
+                    <div className="flex items-center gap-2 sm:ml-auto">
                         <Link href="/register" className="inline-flex">
-                            <Button size="sm">Save my earnings</Button>
+                            <Button size="sm" className="h-7 px-3">Save my earnings</Button>
                         </Link>
-                        <Button size="sm" variant="ghost" onClick={() => closeRef.current()} aria-label="Dismiss">
+                        <button
+                            className="h-7 px-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground"
+                            onClick={() => closeRef.current()}
+                            type="button"
+                            aria-label="Dismiss"
+                        >
                             Later
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>
