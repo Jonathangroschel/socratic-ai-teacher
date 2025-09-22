@@ -28,6 +28,7 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
+import { posthogServer, trackMessageSent } from '@/lib/analytics/posthog-server';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
 import { mem0 } from '@/lib/memory/mem0';
@@ -177,6 +178,24 @@ export async function POST(request: Request) {
         },
       ],
     });
+
+    // Fire-and-forget analytics for DAU/MAU (guests included)
+    try {
+      const firstMessageToday = messageCount === 0;
+      // Approximate 30d message count using DB query window 30*24h (best-effort)
+      const messageCount30d = await getMessageCountByUserId({ id: session.user.id, differenceInHours: 24 * 30 });
+      await trackMessageSent({
+        userId: session.user.id,
+        userType: session.user.type,
+        chatId: id,
+        city,
+        country,
+        timeZone,
+        firstMessageToday,
+        messageCount24h: messageCount + 1,
+        messageCount30d,
+      });
+    } catch (_) { }
 
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
