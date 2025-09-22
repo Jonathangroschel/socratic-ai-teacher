@@ -8,6 +8,8 @@ export default function PostHogInit() {
         let mounted = true;
         (async () => {
             try {
+                // Skip PostHog bootstrap on onboarding to minimize contention
+                if (location.pathname.startsWith('/onboarding')) return;
                 const posthogModule = await import('posthog-js');
                 const posthog = posthogModule.default;
                 if (!mounted) return;

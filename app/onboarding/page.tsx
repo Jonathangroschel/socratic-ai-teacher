@@ -18,6 +18,7 @@ export default function OnboardingPage() {
   const [goals, setGoals] = useState<string>('');
   const [timeBudget, setTimeBudget] = useState<number>(30);
   const [saving, setSaving] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const totalSelected = useMemo(
     () => Object.values(selected).reduce((acc, set) => acc + set.size, 0),
@@ -25,25 +26,38 @@ export default function OnboardingPage() {
   );
 
   useEffect(() => {
-    const cached = localStorage.getItem('onboarding:selected');
-    const cachedGoals = localStorage.getItem('onboarding:goals');
-    const cachedTime = localStorage.getItem('onboarding:time');
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached) as Record<string, string[]>;
-        const mapped: Record<string, Set<string>> = {};
-        Object.entries(parsed).forEach(([k, arr]) => (mapped[k] = new Set(arr)));
-        setSelected(mapped);
-      } catch { }
-    }
-    if (cachedGoals) setGoals(cachedGoals);
-    if (cachedTime) setTimeBudget(Number(cachedTime));
+    // Defer localStorage work to idle time to unblock hydration/paint
+    try {
+      // @ts-ignore
+      const schedule = window.requestIdleCallback || ((fn: Function) => setTimeout(fn, 1));
+      schedule(() => {
+        const cached = localStorage.getItem('onboarding:selected');
+        const cachedGoals = localStorage.getItem('onboarding:goals');
+        const cachedTime = localStorage.getItem('onboarding:time');
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached) as Record<string, string[]>;
+            const mapped: Record<string, Set<string>> = {};
+            Object.entries(parsed).forEach(([k, arr]) => (mapped[k] = new Set(arr)));
+            setSelected(mapped);
+          } catch { }
+        }
+        if (cachedGoals) setGoals(cachedGoals);
+        if (cachedTime) setTimeBudget(Number(cachedTime));
+      });
+    } catch { }
   }, []);
 
   useEffect(() => {
-    const json: Record<string, string[]> = {};
-    Object.entries(selected).forEach(([k, set]) => (json[k] = Array.from(set)));
-    localStorage.setItem('onboarding:selected', JSON.stringify(json));
+    try {
+      // @ts-ignore
+      const schedule = window.requestIdleCallback || ((fn: Function) => setTimeout(fn, 1));
+      schedule(() => {
+        const json: Record<string, string[]> = {};
+        Object.entries(selected).forEach(([k, set]) => (json[k] = Array.from(set)));
+        localStorage.setItem('onboarding:selected', JSON.stringify(json));
+      });
+    } catch { }
   }, [selected]);
 
   function toggle(category: string, topic: string) {
@@ -58,6 +72,21 @@ export default function OnboardingPage() {
   function next() {
     if (step === 1) setStep(2);
     else if (step === 2) setStep(3);
+  }
+
+  async function ensureGuestSession() {
+    try {
+      // Attempt to create a guest session if user isn't authenticated yet
+      const res = await fetch(`/api/auth/guest?redirectUrl=${encodeURIComponent('/onboarding')}`, {
+        method: 'GET',
+        credentials: 'include',
+        redirect: 'follow',
+      });
+      // If redirected, the cookie is set; ignore response body
+      return res;
+    } catch (_) {
+      // Non-fatal: continue
+    }
   }
 
   async function finish() {
@@ -80,6 +109,9 @@ export default function OnboardingPage() {
 
       console.log('Sending profile data:', payload);
 
+      // Ensure a session exists (guest or regular) before saving preferences
+      await ensureGuestSession();
+
       const res = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,34 +126,8 @@ export default function OnboardingPage() {
         localStorage.removeItem('onboarding:goals');
         localStorage.removeItem('onboarding:time');
 
-        // Poll the profile endpoint to ensure the server recognizes onboardingCompleted
-        let verified = false;
-        for (let attempt = 0; attempt < 5; attempt++) {
-          try {
-            const verifyRes = await fetch('/api/profile', { cache: 'no-store', credentials: 'include' });
-            if (verifyRes.ok) {
-              const profile = await verifyRes.json();
-              console.log('Profile verification attempt', attempt + 1, profile);
-              if (profile && profile.onboardingCompleted) {
-                verified = true;
-                break;
-              }
-            } else {
-              console.warn('Profile verification failed with status', verifyRes.status);
-            }
-          } catch (e) {
-            console.warn('Profile verification error', e);
-          }
-          // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
-          await new Promise((r) => setTimeout(r, 100 * Math.pow(2, attempt)));
-        }
-
-        if (!verified) {
-          console.warn('Profile not verified after polling; proceeding with navigation');
-        }
-
-        // Use a full page navigation to avoid any SPA navigation issues on Safari
-        window.location.replace('/');
+        // Navigate to home synchronously to keep flow simple
+        window.location.assign('/');
       } else {
         const errorData = await res.json().catch(() => ({}));
         console.error('Profile save failed:', res.status, errorData);
@@ -171,29 +177,32 @@ export default function OnboardingPage() {
               Pick at least 3 topics you enjoy. I’ll tailor sessions to these. Don’t worry—you can always change these later.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {INTERESTS.map((cat: InterestCategory) => (
+              {(showAll ? INTERESTS : INTERESTS.slice(0, 6)).map((cat: InterestCategory) => (
                 <div key={cat.category} className="rounded-lg border p-3">
                   <div className="text-sm font-medium mb-2">{cat.category}</div>
                   <div className="flex flex-wrap gap-2">
                     {cat.topics.map((topic) => {
                       const isSelected = selected[cat.category]?.has(topic);
                       return (
-                        <Button
+                        <button
                           key={topic}
-                          size="sm"
-                          variant={isSelected ? 'default' : 'outline'}
-                          className="h-7 rounded-full"
+                          className={`h-7 rounded-full px-3 text-sm border ${isSelected ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'}`}
                           onClick={() => toggle(cat.category, topic)}
                         >
                           {isSelected ? '✓ ' : ''}
                           {topic}
-                        </Button>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
               ))}
             </div>
+            {!showAll && (
+              <div className="flex items-center justify-center">
+                <Button variant="outline" onClick={() => setShowAll(true)}>Show more categories</Button>
+              </div>
+            )}
             <div className="flex items-center justify-between py-2">
               <div className="text-sm text-muted-foreground">{totalSelected} selected (min 3)</div>
               <Button disabled={totalSelected < 3} onClick={next}>

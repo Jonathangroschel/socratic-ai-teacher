@@ -37,6 +37,30 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
+  // Allow onboarding to render without forcing a guest session.
+  // We'll create a guest on submit to reduce first paint latency.
+  if (pathname.startsWith('/onboarding')) {
+    const res = NextResponse.next();
+    const visitedBefore = Boolean(
+      request.cookies.get('poly_has_visited_before') ||
+      request.cookies.get('poly_visited'),
+    );
+    if (!visitedBefore) {
+      res.cookies.set('poly_has_visited_before', '1', {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+      res.cookies.set('poly_first_session', '1', {
+        path: '/',
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+    }
+    return res;
+  }
+
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
