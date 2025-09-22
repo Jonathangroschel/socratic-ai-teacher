@@ -19,6 +19,12 @@ export function AccountNudgePill({
     const points = typeof todayTotal === 'number' && todayTotal > 0
         ? new Intl.NumberFormat().format(todayTotal)
         : null;
+    const desktopText = points
+        ? `Save your earnings — keep ${points} from today and get a 1,000‑point bonus.`
+        : `Save your earnings — get a 1,000‑point bonus.`;
+    const mobileText = points
+        ? `Save ${points} +1,000 bonus`
+        : `Save +1,000 bonus`;
 
     return (
         <div
@@ -28,14 +34,9 @@ export function AccountNudgePill({
                 className,
             )}
         >
-            <Link
-                href="/register"
-                className="inline-flex items-center gap-1 text-foreground/90 hover:text-foreground transition-colors"
-            >
-                <span className="font-medium hidden sm:inline">Save earnings</span>
-                <span className="sm:hidden font-medium">Save</span>
-                <span className="opacity-70">{points ? `· ${points}` : ''}</span>
-                <span className="ml-1 font-semibold">+1,000</span>
+            <Link href="/register" className="inline-flex items-center gap-1 text-foreground/90 hover:text-foreground transition-colors">
+                <span className="hidden sm:inline truncate max-w-[60vw]">{desktopText}</span>
+                <span className="sm:hidden truncate max-w-[40vw] font-medium">{mobileText}</span>
             </Link>
             <button
                 type="button"
