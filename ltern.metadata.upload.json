@@ -1,0 +1,19 @@
+{
+  "name": "Polymatic",
+  "symbol": "LTERN",
+  "description": "Learn-to-Earn token powering Polymatic.",
+  "image": "https://nmsano3ymssnng6trtypsl3yr52dqsucawbmhpzifsznkmyfgigq.ardrive.net/ayQGu3hkpNab04zw-S94j3Q4SoIFgsO_KCyy1TMFMg0",
+  "external_url": "https://polymaticai.com",
+  "extensions": {
+    "website": "https://polymaticai.com"
+  },
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "https://nmsano3ymssnng6trtypsl3yr52dqsucawbmhpzifsznkmyfgigq.ardrive.net/ayQGu3hkpNab04zw-S94j3Q4SoIFgsO_KCyy1TMFMg0",
+        "type": "image/png"
+      }
+    ]
+  }
+}
