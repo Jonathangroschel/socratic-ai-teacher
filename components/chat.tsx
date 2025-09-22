@@ -173,16 +173,6 @@ export function Chat({
   return (
     <>
       <div className="flex flex-col min-w-0 h-dvh bg-background touch-pan-y overscroll-behavior-contain">
-        {showAccountNudge && (
-          <AccountNudgeBanner
-            visible={showAccountNudge}
-            todayTotal={todayRewardTotal}
-            onClose={() => {
-              setShowAccountNudge(false);
-              localStorage.setItem('accountNudge:last', String(Date.now()));
-            }}
-          />
-        )}
         <ChatHeader
           chatId={id}
           selectedVisibilityType={initialVisibilityType}
@@ -219,6 +209,14 @@ export function Chat({
               selectedVisibilityType={visibilityType}
               selectedModelId={initialChatModel}
               usage={usage}
+              nudge={showAccountNudge ? {
+                visible: true,
+                todayTotal: todayRewardTotal,
+                onClose: () => {
+                  setShowAccountNudge(false);
+                  localStorage.setItem('accountNudge:last', String(Date.now()));
+                }
+              } : undefined}
             />
           )}
         </div>
