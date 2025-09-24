@@ -255,6 +255,8 @@
 .fx-grain-vignette {
     position: relative;
     isolation: isolate;
+    /* Prevent pseudo-elements from increasing page scroll height */
+    overflow: hidden;
 }
 
 .fx-grain-vignette::before {
