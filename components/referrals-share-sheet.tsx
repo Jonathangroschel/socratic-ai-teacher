@@ -91,6 +91,7 @@ export function ReferralsShareSheet({
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent
                 side="bottom"
+                noAnimation
                 className="px-4 pb-5 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-xl sm:rounded-xl sm:border sm:px-6 sm:py-5 sm:shadow-xl"
             >
                 <SheetHeader>

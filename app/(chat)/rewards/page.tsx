@@ -47,26 +47,10 @@ export default function RewardsPage() {
   const formatNumber = (n: number) =>
     new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 
-  // Native share fallback: open our sheet when Web Share API is unavailable
+  // Always open our custom share sheet (avoid native OS share panel)
   const triggerShare = async () => {
     if (!inviteState.url) return;
-    const url = inviteState.url;
-    try {
-      if ((navigator as any).share) {
-        await (navigator as any).share({ title: 'Polymatic — Invite & Earn', text: 'Join me on Polymatic and start learning to earn!', url });
-        try {
-          await fetch('/api/analytics/referrals', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ event: 'referral_shared', channel: 'native' }),
-          });
-        } catch { }
-      } else {
-        setShareOpen(true);
-      }
-    } catch {
-      setShareOpen(true);
-    }
+    setShareOpen(true);
   };
 
   const loadInviteUrl = async () => {
