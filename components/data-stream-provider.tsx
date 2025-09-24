@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { DataUIPart } from 'ai';
 import type { CustomUIDataTypes } from '@/lib/types';
 
@@ -21,6 +21,14 @@ export function DataStreamProvider({
   const [dataStream, setDataStream] = useState<DataUIPart<CustomUIDataTypes>[]>(
     [],
   );
+
+  // Referral attribution bootstrap (idempotent)
+  const fired = useRef(false);
+  useEffect(() => {
+    if (fired.current) return;
+    fired.current = true;
+    fetch('/api/referrals/attribute-if-present', { method: 'POST', credentials: 'include' }).catch(() => {});
+  }, []);
 
   const value = useMemo(() => ({ dataStream, setDataStream }), [dataStream]);
 

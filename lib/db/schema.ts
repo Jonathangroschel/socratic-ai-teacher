@@ -199,6 +199,9 @@ export const rewardTransaction = pgTable('RewardTransaction', {
   amount: integer('amount').notNull(),
   rubric: jsonb('rubric'),
   reason: text('reason'),
+  // referral fields
+  kind: varchar('kind').notNull().default('learning'),
+  referralAttributionId: uuid('referralAttributionId'),
   createdAt: timestamp('createdAt').notNull(),
 });
 
@@ -231,3 +234,39 @@ export const walletVerificationNonce = pgTable('WalletVerificationNonce', {
 });
 
 export type WalletVerificationNonce = InferSelectModel<typeof walletVerificationNonce>;
+
+// =====================
+// Referrals
+// =====================
+
+export const referralCode = pgTable('ReferralCode', {
+  // One code per user; use userId as primary for simplicity
+  userId: uuid('userId')
+    .primaryKey()
+    .notNull()
+    .references(() => user.id),
+  code: varchar('code', { length: 16 }).notNull(),
+  createdAt: timestamp('createdAt').notNull(),
+});
+
+export type ReferralCode = InferSelectModel<typeof referralCode>;
+
+export const referralAttribution = pgTable('ReferralAttribution', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  referrerUserId: uuid('referrerUserId')
+    .notNull()
+    .references(() => user.id),
+  refereeUserId: uuid('refereeUserId')
+    .notNull()
+    .references(() => user.id),
+  utmSource: varchar('utmSource', { length: 32 }),
+  utmMedium: varchar('utmMedium', { length: 32 }),
+  utmCampaign: varchar('utmCampaign', { length: 64 }),
+  source: varchar('source', { length: 32 }),
+  ipHash: varchar('ipHash', { length: 128 }),
+  uaHash: varchar('uaHash', { length: 128 }),
+  signupAwardedAt: timestamp('signupAwardedAt'),
+  createdAt: timestamp('createdAt').notNull(),
+});
+
+export type ReferralAttribution = InferSelectModel<typeof referralAttribution>;
