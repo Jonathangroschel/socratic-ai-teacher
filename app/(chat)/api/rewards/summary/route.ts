@@ -1,7 +1,7 @@
 import { auth } from '@/app/(auth)/auth';
 import { ChatSDKError } from '@/lib/errors';
 import { getRewardRowsInRangeByUserId, getRewardsSummaryByUserId, getReferralSummaryByUserId } from '@/lib/db/queries';
-import { REWARDS_DAILY_CAP } from '@/lib/constants';
+import { REWARDS_DAILY_CAP, referralsEnabled as referralsEnabledFlag } from '@/lib/constants';
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
 
     const referral = await getReferralSummaryByUserId({ userId: session.user.id }).catch(() => ({ signupsAwarded: 0, totalReferralPoints: 0 }));
 
-    return Response.json({ today, lifetime: base.lifetime, month, series, dailyCap: REWARDS_DAILY_CAP, tz, referral, userType: session.user.type });
+    return Response.json({ today, lifetime: base.lifetime, month, series, dailyCap: REWARDS_DAILY_CAP, tz, referral, userType: session.user.type, referralsEnabled: referralsEnabledFlag });
   } catch (e: any) {
     const msg = e?.message || '';
     // Graceful fallback if the migration hasn't run yet and table is missing

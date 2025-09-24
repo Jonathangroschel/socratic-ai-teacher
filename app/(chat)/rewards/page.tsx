@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
 import { ConnectWallet } from '@/components/wallet/connect-wallet';
-import { referralsEnabled } from '@/lib/constants';
+import { referralsEnabled as referralsEnabledStatic } from '@/lib/constants';
 
 type SummaryResponse = {
   today: number;
@@ -39,6 +39,7 @@ export default function RewardsPage() {
   const today = data?.today ?? 0;
   const lifetime = data?.lifetime ?? 0;
   const series = useMemo(() => data?.series ?? [], [data]);
+  const referralsEnabled = data?.referralsEnabled ?? referralsEnabledStatic;
 
   const formatNumber = (n: number) =>
     new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
