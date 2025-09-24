@@ -349,6 +349,7 @@ export async function POST(request: Request) {
             messageId: messages.at(-1)?.id ?? undefined,
             userText,
             assistantText,
+            timeZone,
           });
           if (reward && reward.delta && reward.delta > 0) {
             try {
