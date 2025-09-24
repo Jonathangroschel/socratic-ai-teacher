@@ -98,9 +98,13 @@ export function Chat({
         setUsage(dataPart.data);
       }
       if (dataPart.type === 'data-reward') {
-        const { todayTotal, delta } = dataPart.data as any;
+        const { todayTotal, delta, cap, min, max } = dataPart.data as any;
         if (typeof todayTotal === 'number') setTodayRewardTotal(todayTotal);
         else if (typeof delta === 'number') setTodayRewardTotal((t) => t + delta);
+        const total = typeof todayTotal === 'number' ? todayTotal : undefined;
+        if (typeof cap === 'number' && typeof total === 'number' && total >= cap) {
+          toast({ type: 'success', description: `Daily earnings cap reached (${cap.toLocaleString()}). Come back tomorrow!` });
+        }
       }
     },
     onFinish: () => {
