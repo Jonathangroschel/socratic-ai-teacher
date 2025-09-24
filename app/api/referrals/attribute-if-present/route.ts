@@ -1,7 +1,6 @@
 import { auth } from '@/app/(auth)/auth';
 import { ChatSDKError } from '@/lib/errors';
 import {
-    createReferralCode,
     getReferralCodeByCode,
     getTodayReferralSignupTotalByUserId,
     hasReferralSignupAwardForAttribution,
@@ -26,15 +25,6 @@ function sha256Hex(input: string) {
 
 export async function POST(request: Request) {
     if (!referralsEnabled) return Response.json({ awarded: false });
-    // Allow codes and attribution to exist generally, but gate the signup award specifically
-    if (!REFERRAL_SIGNUP_ENABLED) {
-        const headers = new Headers();
-        headers.append('Set-Cookie', 'poly_ref=; Max-Age=0; Path=/');
-        headers.append('Set-Cookie', 'poly_utm_source=; Max-Age=0; Path=/');
-        headers.append('Set-Cookie', 'poly_utm_medium=; Max-Age=0; Path=/');
-        headers.append('Set-Cookie', 'poly_utm_campaign=; Max-Age=0; Path=/');
-        return new Response(JSON.stringify({ awarded: false, reason: 'disabled' }), { headers, status: 200 });
-    }
     const session = await auth();
     if (!session?.user) return new ChatSDKError('unauthorized:api').toResponse();
 
@@ -84,6 +74,19 @@ export async function POST(request: Request) {
         });
         // Best-effort analytics
         trackReferralAttributed({ referrerUserId, refereeUserId, code: codeRow.code, utmSource, utmMedium, utmCampaign }).catch(() => { });
+
+        // If signup bonuses are disabled, stop here after attribution
+        if (!REFERRAL_SIGNUP_ENABLED) {
+            const headers = new Headers();
+            headers.append('Set-Cookie', 'poly_ref=; Max-Age=0; Path=/');
+            headers.append('Set-Cookie', 'poly_utm_source=; Max-Age=0; Path=/');
+            headers.append('Set-Cookie', 'poly_utm_medium=; Max-Age=0; Path=/');
+            headers.append('Set-Cookie', 'poly_utm_campaign=; Max-Age=0; Path=/');
+            return new Response(JSON.stringify({ awarded: false, reason: 'disabled' }), {
+                headers,
+                status: 200,
+            });
+        }
 
         // Idempotency: if already awarded, short-circuit
         const already = await hasReferralSignupAwardForAttribution({ referralAttributionId: attribution.id });
