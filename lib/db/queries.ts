@@ -36,6 +36,10 @@ import {
   userWallet,
   type UserWallet,
   walletVerificationNonce,
+  referralCode,
+  type ReferralCode,
+  referralAttribution,
+  type ReferralAttribution,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
 import { generateUUID } from '../utils';
@@ -143,6 +147,8 @@ export async function saveRewardTransaction(tx: {
   amount: number;
   rubric?: Record<string, unknown> | null;
   reason?: string | null;
+  kind?: string | null;
+  referralAttributionId?: string | null;
 }) {
   try {
     const [row] = await db
@@ -155,6 +161,8 @@ export async function saveRewardTransaction(tx: {
         amount: tx.amount,
         rubric: tx.rubric ?? null,
         reason: tx.reason ?? null,
+        kind: tx.kind ?? 'learning',
+        referralAttributionId: tx.referralAttributionId ?? null,
         createdAt: new Date(),
       })
       .returning();
@@ -185,6 +193,142 @@ export async function getTodayRewardTotalByUserId(userId: string) {
     return rows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get rewards');
+  }
+}
+
+/** Referral-specific: today's awarded referral signup bonus total for a referrer */
+export async function getTodayReferralSignupTotalByUserId(userId: string) {
+  try {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const rows = await db
+      .select({ amount: rewardTransaction.amount })
+      .from(rewardTransaction)
+      .where(
+        and(
+          eq(rewardTransaction.userId, userId),
+          eq(rewardTransaction.kind, 'referral_signup_referrer_bonus'),
+          gte(rewardTransaction.createdAt, start),
+          lte(rewardTransaction.createdAt, end),
+        ),
+      );
+
+    return rows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get referral signup rewards');
+  }
+}
+
+// =====================
+// Referrals
+// =====================
+
+export async function getReferralCodeByUserId({ userId }: { userId: string }): Promise<ReferralCode | null> {
+  try {
+    const [row] = await db.select().from(referralCode).where(eq(referralCode.userId, userId)).limit(1);
+    return (row as ReferralCode) ?? null;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get referral code');
+  }
+}
+
+export async function getReferralCodeByCode({ code }: { code: string }): Promise<ReferralCode | null> {
+  try {
+    const [row] = await db.select().from(referralCode).where(eq(referralCode.code, code)).limit(1);
+    return (row as ReferralCode) ?? null;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to resolve referral code');
+  }
+}
+
+export async function createReferralCode({ userId, code }: { userId: string; code: string }): Promise<void> {
+  try {
+    await db.insert(referralCode).values({ userId, code, createdAt: new Date() });
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to create referral code');
+  }
+}
+
+export async function upsertReferralAttribution({
+  referrerUserId,
+  refereeUserId,
+  utmSource,
+  utmMedium,
+  utmCampaign,
+  source,
+  ipHash,
+  uaHash,
+}: {
+  referrerUserId: string;
+  refereeUserId: string;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  source?: string | null;
+  ipHash?: string | null;
+  uaHash?: string | null;
+}): Promise<ReferralAttribution> {
+  try {
+    // One referrer per referee enforced by unique constraint we expect at DB level; emulate here
+    const existing = await db
+      .select()
+      .from(referralAttribution)
+      .where(eq(referralAttribution.refereeUserId, refereeUserId))
+      .limit(1);
+
+    if (existing.length) return existing[0] as ReferralAttribution;
+
+    const [row] = await db
+      .insert(referralAttribution)
+      .values({
+        id: generateUUID(),
+        referrerUserId,
+        refereeUserId,
+        utmSource: utmSource ?? null,
+        utmMedium: utmMedium ?? null,
+        utmCampaign: utmCampaign ?? null,
+        source: source ?? 'cookie',
+        ipHash: ipHash ?? null,
+        uaHash: uaHash ?? null,
+        createdAt: new Date(),
+      })
+      .returning();
+    return row as ReferralAttribution;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to upsert referral attribution');
+  }
+}
+
+export async function markReferralSignupAwarded({ id }: { id: string }): Promise<void> {
+  try {
+    await db.update(referralAttribution).set({ signupAwardedAt: new Date() }).where(eq(referralAttribution.id, id));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update referral attribution');
+  }
+}
+
+export async function getReferralSummaryByUserId({ userId }: { userId: string }) {
+  try {
+    const awardedRows = await db
+      .select({ id: referralAttribution.id })
+      .from(referralAttribution)
+      .where(and(eq(referralAttribution.referrerUserId, userId), gt(referralAttribution.signupAwardedAt, new Date(0))))
+      .execute();
+
+    const signupsAwarded = awardedRows.length;
+
+    const txRows = await db
+      .select({ amount: rewardTransaction.amount })
+      .from(rewardTransaction)
+      .where(and(eq(rewardTransaction.userId, userId), eq(rewardTransaction.kind, 'referral_signup_referrer_bonus')));
+    const totalReferralPoints = txRows.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+
+    return { signupsAwarded, totalReferralPoints };
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get referral summary');
   }
 }
 
@@ -307,6 +451,28 @@ export async function getRewardsSeriesLastNDaysByUserId({
     series.push({ date: key, total: byDay.get(key) ?? 0 });
   }
   return series;
+}
+
+export async function hasReferralSignupAwardForAttribution({
+  referralAttributionId,
+}: {
+  referralAttributionId: string;
+}): Promise<boolean> {
+  try {
+    const rows = await db
+      .select({ id: rewardTransaction.id })
+      .from(rewardTransaction)
+      .where(
+        and(
+          eq(rewardTransaction.referralAttributionId, referralAttributionId as any),
+          eq(rewardTransaction.kind, 'referral_signup_referrer_bonus'),
+        ),
+      )
+      .limit(1);
+    return rows.length > 0;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to check referral award');
+  }
 }
 
 export async function getRewardsSummaryByUserId({

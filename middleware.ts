@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { guestRegex, isDevelopmentEnvironment } from './lib/constants';
+import { guestRegex, isDevelopmentEnvironment, referralsEnabled, REFERRAL_UTM_DEFAULTS } from './lib/constants';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -11,6 +11,50 @@ export async function middleware(request: NextRequest) {
    */
   if (pathname.startsWith('/ping')) {
     return new Response('pong', { status: 200 });
+  }
+
+  // Capture referral & UTM parameters into short-lived cookies for attribution
+  try {
+    const ref = request.nextUrl.searchParams.get('ref');
+    if (referralsEnabled && ref) {
+      const res = NextResponse.next();
+      // 14 days TTL
+      const maxAge = 60 * 60 * 24 * 14;
+      res.cookies.set('poly_ref', ref, {
+        path: '/',
+        maxAge,
+        sameSite: 'lax',
+        secure: !isDevelopmentEnvironment,
+      });
+      const utmSource = request.nextUrl.searchParams.get('utm_source') || REFERRAL_UTM_DEFAULTS.source;
+      const utmMedium = request.nextUrl.searchParams.get('utm_medium') || REFERRAL_UTM_DEFAULTS.medium;
+      const utmCampaign = request.nextUrl.searchParams.get('utm_campaign') || REFERRAL_UTM_DEFAULTS.campaign;
+      res.cookies.set('poly_utm_source', utmSource, { path: '/', maxAge, sameSite: 'lax', secure: !isDevelopmentEnvironment });
+      res.cookies.set('poly_utm_medium', utmMedium, { path: '/', maxAge, sameSite: 'lax', secure: !isDevelopmentEnvironment });
+      res.cookies.set('poly_utm_campaign', utmCampaign, { path: '/', maxAge, sameSite: 'lax', secure: !isDevelopmentEnvironment });
+
+      // Also set first-visit/session cookies if needed
+      const visitedBefore = Boolean(
+        request.cookies.get('poly_has_visited_before') ||
+        request.cookies.get('poly_visited'),
+      );
+      if (!visitedBefore) {
+        res.cookies.set('poly_has_visited_before', '1', {
+          path: '/',
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: 'lax',
+          secure: !isDevelopmentEnvironment,
+        });
+        res.cookies.set('poly_first_session', '1', {
+          path: '/',
+          sameSite: 'lax',
+          secure: !isDevelopmentEnvironment,
+        });
+      }
+      return res;
+    }
+  } catch (_) {
+    // noop
   }
 
   if (pathname.startsWith('/api/auth')) {

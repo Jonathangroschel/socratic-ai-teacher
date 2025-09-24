@@ -51,17 +51,27 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+  VariantProps<typeof sheetVariants> {
+  noAnimation?: boolean;
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = 'right', className, children, ...props }, ref) => (
+>(({ side = 'right', className, children, noAnimation, ...props }, ref) => (
   <SheetPortal>
-    <SheetOverlay />
+    <SheetOverlay
+      className={cn(
+        noAnimation && 'data-[state=open]:animate-none data-[state=closed]:animate-none',
+      )}
+    />
     <SheetPrimitive.Content
       ref={ref}
-      className={cn(sheetVariants({ side }), className)}
+      className={cn(
+        sheetVariants({ side }),
+        noAnimation && 'transition-none data-[state=open]:animate-none data-[state=closed]:animate-none data-[state=open]:duration-0 data-[state=closed]:duration-0',
+        className,
+      )}
       {...props}
     >
       {children}

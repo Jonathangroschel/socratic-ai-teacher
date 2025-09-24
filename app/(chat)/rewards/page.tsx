@@ -1,12 +1,14 @@
 'use client';
 
 import useSWR from 'swr';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
 import { ConnectWallet } from '@/components/wallet/connect-wallet';
+import { ReferralsShareSheet } from '@/components/referrals-share-sheet';
+import { referralsEnabled as referralsEnabledStatic } from '@/lib/constants';
 
 type SummaryResponse = {
   today: number;
@@ -14,6 +16,9 @@ type SummaryResponse = {
   month: number;
   series: Array<{ date: string; total: number }>;
   dailyCap: number;
+  referral?: { signupsAwarded: number; totalReferralPoints: number };
+  userType?: 'guest' | 'regular';
+  referralsEnabled?: boolean;
 };
 
 const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json());
@@ -25,6 +30,9 @@ export default function RewardsPage() {
   });
   const { data: walletsData, mutate: mutateWallets } = useSWR<{ items: Array<any> }>(`/api/wallets`, fetcher);
 
+  const [inviteState, setInviteState] = useState<{ url: string | null; loading: boolean; error: string | null }>({ url: null, loading: false, error: null });
+  const [shareOpen, setShareOpen] = useState(false);
+
   useEffect(() => {
     const onChanged = () => mutateWallets();
     document.addEventListener('wallets:changed', onChanged);
@@ -34,9 +42,28 @@ export default function RewardsPage() {
   const today = data?.today ?? 0;
   const lifetime = data?.lifetime ?? 0;
   const series = useMemo(() => data?.series ?? [], [data]);
+  const referralsEnabled = data?.referralsEnabled ?? referralsEnabledStatic;
 
   const formatNumber = (n: number) =>
     new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
+
+  // Always open our custom share sheet (avoid native OS share panel)
+  const triggerShare = async () => {
+    if (!inviteState.url) return;
+    setShareOpen(true);
+  };
+
+  const loadInviteUrl = async () => {
+    setInviteState((s) => ({ ...s, loading: true, error: null }));
+    try {
+      const res = await fetch('/api/referrals/code', { method: 'POST' });
+      if (!res.ok) throw new Error('Failed');
+      const json = await res.json();
+      setInviteState({ url: json.url, loading: false, error: null });
+    } catch (e) {
+      setInviteState({ url: null, loading: false, error: 'Could not generate link' });
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl p-4 md:p-6 lg:p-8 fx-grain-vignette">
@@ -103,6 +130,56 @@ export default function RewardsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {referralsEnabled && (
+        <div className="mt-4">
+          <Card className="w-full fx-card">
+            <CardHeader className="flex items-center justify-between space-y-0">
+              <CardTitle className="text-base">Invite & Earn</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="md:col-span-2">
+                  <div className="text-sm text-muted-foreground">Invite friends. Earn <span className="font-medium">50,000</span> points when someone joins with your link.</div>
+                  {data?.userType === 'guest' ? (
+                    <div className="mt-3">
+                      <Link href="/register" className="inline-flex">
+                        <Button size="sm" className="h-9">Create your account to get your invite link</Button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {inviteState.url ? (
+                        <Button size="sm" variant="outline" className="h-9" onClick={triggerShare}>Share…</Button>
+                      ) : (
+                        <Button size="sm" className="h-9" disabled={inviteState.loading} onClick={loadInviteUrl}>
+                          {inviteState.loading ? 'Generating…' : 'Get your link'}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-md border bg-muted/25 p-3">
+                  <div className="text-sm text-muted-foreground">Your referral stats</div>
+                  <div className="mt-2 flex items-center justify-between text-sm">
+                    <div className="text-muted-foreground">Signups awarded</div>
+                    <div className="font-medium tabular-nums">{data?.referral?.signupsAwarded ?? 0}</div>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-sm">
+                    <div className="text-muted-foreground">Total referral points</div>
+                    <div className="font-medium tabular-nums">{formatNumber(data?.referral?.totalReferralPoints ?? 0)}</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Share sheet */}
+      {referralsEnabled && (
+        <ReferralsShareSheet open={shareOpen} onOpenChange={setShareOpen} url={inviteState.url} />
+      )}
 
       {/* Mobile: show an inline banner under cards */}
       <div className="md:hidden mt-4">
