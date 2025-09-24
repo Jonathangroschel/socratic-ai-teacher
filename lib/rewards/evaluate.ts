@@ -123,7 +123,7 @@ Then propose reward_raw_100_10000 (high variability allowed) and a short reason.
 
     const updatedToday = today + amount;
     console.log('[rewards] grant', { amount, today, updatedToday, reason: result.reason });
-    return { delta: amount, todayTotal: updatedToday, lifetimeTotal: undefined, saved };
+    return { delta: amount, todayTotal: updatedToday, lifetimeTotal: undefined, saved, cap: REWARDS_DAILY_CAP, min: REWARD_MIN, max: REWARD_MAX };
   } catch (err) {
     console.warn('[rewards] evaluation failed', err);
     return null;

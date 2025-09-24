@@ -21,7 +21,7 @@ export const rewardsEnabled = (() => {
 })();
 export const REWARD_MIN = 100;
 export const REWARD_MAX = 10_000;
-export const REWARDS_DAILY_CAP = Number(process.env.REWARDS_DAILY_CAP ?? 50_000);
+export const REWARDS_DAILY_CAP = Number(process.env.REWARDS_DAILY_CAP ?? 100_000);
 
 // Referrals feature flag and defaults
 export const referralsEnabled = (() => {
