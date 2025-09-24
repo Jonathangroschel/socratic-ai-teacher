@@ -17,6 +17,7 @@ type SummaryResponse = {
   dailyCap: number;
   referral?: { signupsAwarded: number; totalReferralPoints: number };
   userType?: 'guest' | 'regular';
+  referralsEnabled?: boolean;
 };
 
 const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then((r) => r.json());
