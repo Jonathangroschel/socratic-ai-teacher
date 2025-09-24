@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { myProvider } from '@/lib/ai/providers';
 import { generateObject } from 'ai';
 import { REWARD_MIN, REWARD_MAX, REWARDS_DAILY_CAP, rewardsEnabled } from '@/lib/constants';
-import { getTodayRewardTotalByUserId, saveRewardTransaction } from '@/lib/db/queries';
+import { getRewardRowsInRangeByUserId, getTodayRewardTotalByUserId, saveRewardTransaction } from '@/lib/db/queries';
 
 const RewardSchema = z.object({
   correctness_0_5: z.number().min(0).max(5),
@@ -22,12 +22,14 @@ export async function evaluateAndReward({
   messageId,
   userText,
   assistantText,
+  timeZone,
 }: {
   userId: string;
   chatId?: string;
   messageId?: string;
   userText: string;
   assistantText: string;
+  timeZone?: string | null;
 }) {
   if (!rewardsEnabled) {
     console.log('[rewards] disabled via REWARDS_ENABLED');
@@ -63,7 +65,35 @@ Then propose reward_raw_100_10000 (high variability allowed) and a short reason.
 
     const result = object as z.infer<typeof RewardSchema>;
 
-    const today = await getTodayRewardTotalByUserId(userId);
+    // Compute today's total in the user's timezone (aligns with dashboard display)
+    let today = 0;
+    try {
+      const tz = timeZone || 'UTC';
+      const now = new Date();
+      const startUtc = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+      const rows = await getRewardRowsInRangeByUserId({ userId, start: startUtc, end: now });
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const keyFor = (d: Date) => {
+        const parts = fmt.formatToParts(d);
+        const y = parts.find((p) => p.type === 'year')?.value;
+        const m = parts.find((p) => p.type === 'month')?.value;
+        const da = parts.find((p) => p.type === 'day')?.value;
+        return `${y}-${m}-${da}`;
+      };
+      const todayKey = keyFor(now);
+      for (const r of rows) {
+        const k = keyFor(new Date(r.createdAt));
+        if (k === todayKey) today += r.amount ?? 0;
+      }
+    } catch (err) {
+      // Fallback to server-local day on error
+      today = await getTodayRewardTotalByUserId(userId);
+    }
     const remaining = Math.max(REWARDS_DAILY_CAP - today, 0);
     const raw = Math.max(
       REWARD_MIN,
