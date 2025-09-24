@@ -13,6 +13,7 @@ import {
     REFERRALS_SIGNUP_DAILY_CAP_PER_REFERRER,
     REFERRAL_SIGNUP_BONUS_REFERRER,
     referralsEnabled,
+    REFERRAL_SIGNUP_ENABLED,
     REFERRAL_IP_HASH_SECRET,
     REFERRAL_UTM_DEFAULTS,
 } from '@/lib/constants';
@@ -25,6 +26,15 @@ function sha256Hex(input: string) {
 
 export async function POST(request: Request) {
     if (!referralsEnabled) return Response.json({ awarded: false });
+    // Allow codes and attribution to exist generally, but gate the signup award specifically
+    if (!REFERRAL_SIGNUP_ENABLED) {
+        const headers = new Headers();
+        headers.append('Set-Cookie', 'poly_ref=; Max-Age=0; Path=/');
+        headers.append('Set-Cookie', 'poly_utm_source=; Max-Age=0; Path=/');
+        headers.append('Set-Cookie', 'poly_utm_medium=; Max-Age=0; Path=/');
+        headers.append('Set-Cookie', 'poly_utm_campaign=; Max-Age=0; Path=/');
+        return new Response(JSON.stringify({ awarded: false, reason: 'disabled' }), { headers, status: 200 });
+    }
     const session = await auth();
     if (!session?.user) return new ChatSDKError('unauthorized:api').toResponse();
 
