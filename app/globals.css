@@ -281,3 +281,15 @@
             color-mix(in oklab, transparent 100%, black 7%) 70%,
             color-mix(in oklab, transparent 100%, black 12%) 100%);
 }
+
+/* Disable grain/vignette overlays in light mode to keep surfaces clean */
+:root .fx-grain-vignette::before,
+:root .fx-grain-vignette::after {
+    display: none;
+}
+
+/* Re-enable in dark mode for subtle depth */
+.dark .fx-grain-vignette::before,
+.dark .fx-grain-vignette::after {
+    display: block;
+}
