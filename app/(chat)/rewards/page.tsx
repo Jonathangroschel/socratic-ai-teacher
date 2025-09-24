@@ -47,52 +47,26 @@ export default function RewardsPage() {
   const formatNumber = (n: number) =>
     new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 
-  // Pre-populate invite URL if server already has a code
-  useEffect(() => {
-    if (data?.url && !inviteState.url) {
-      setInviteState((s) => ({ ...s, url: data.url }));
-    }
-  }, [data?.url, inviteState.url]);
-
-  const copyToClipboard = async (text: string) => {
+  // Native share fallback: open our sheet when Web Share API is unavailable
+  const triggerShare = async () => {
+    if (!inviteState.url) return;
+    const url = inviteState.url;
     try {
-      await navigator.clipboard.writeText(text);
-      alert('Link copied');
-    } catch {
-      // fallback toast
-    }
-    try {
-      await fetch('/api/analytics/referrals', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ event: 'referral_link_copied' }),
-      });
-    } catch { }
-  };
-
-  const openShare = async (url: string, channel?: 'reddit' | 'x' | 'discord' | 'email' | 'sms') => {
-    try {
-      const u = new URL(url);
-      if (channel) u.searchParams.set('utm_source', channel);
-      const finalUrl = u.toString();
       if ((navigator as any).share) {
-        await (navigator as any).share({ title: 'Polymatic — Invite & Earn', text: 'Join me on Polymatic and start learning to earn!', url: finalUrl });
+        await (navigator as any).share({ title: 'Polymatic — Invite & Earn', text: 'Join me on Polymatic and start learning to earn!', url });
+        try {
+          await fetch('/api/analytics/referrals', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ event: 'referral_shared', channel: 'native' }),
+          });
+        } catch { }
       } else {
-        // open a new tab for channel presets
-        if (channel === 'reddit') window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(finalUrl)}&title=${encodeURIComponent('Learn & earn 50k points on Polymatic')}`, '_blank');
-        else if (channel === 'x') window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(finalUrl)}&text=${encodeURIComponent('Learn & earn 50k points on Polymatic')}`, '_blank');
-        else if (channel === 'email') window.location.href = `mailto:?subject=${encodeURIComponent('Join me on Polymatic')}&body=${encodeURIComponent(finalUrl)}`;
-        else if (channel === 'sms') window.location.href = `sms:?&body=${encodeURIComponent(finalUrl)}`;
-        else window.open(finalUrl, '_blank');
+        setShareOpen(true);
       }
-      try {
-        await fetch('/api/analytics/referrals', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ event: 'referral_shared', channel }),
-        });
-      } catch { }
-    } catch { }
+    } catch {
+      setShareOpen(true);
+    }
   };
 
   const loadInviteUrl = async () => {
@@ -192,15 +166,7 @@ export default function RewardsPage() {
                   ) : (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {inviteState.url ? (
-                        <>
-                          <Button size="sm" className="h-9" onClick={() => copyToClipboard(inviteState.url!)}>Copy link</Button>
-                          <Button size="sm" variant="outline" className="h-9" onClick={() => setShareOpen(true)}>Share…</Button>
-                          <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'reddit')}>Share to Reddit</Button>
-                          <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'x')}>Share to X</Button>
-                          <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'discord')}>Share to Discord</Button>
-                          <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'email')}>Email</Button>
-                          <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'sms')}>SMS</Button>
-                        </>
+                        <Button size="sm" variant="outline" className="h-9" onClick={triggerShare}>Share…</Button>
                       ) : (
                         <Button size="sm" className="h-9" disabled={inviteState.loading} onClick={loadInviteUrl}>
                           {inviteState.loading ? 'Generating…' : 'Get your link'}

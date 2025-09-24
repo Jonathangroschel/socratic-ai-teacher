@@ -3,6 +3,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useMemo } from 'react';
+import { toast } from '@/components/toast';
 
 export type ShareChannel = 'reddit' | 'x' | 'discord' | 'email' | 'sms' | 'copy';
 
@@ -16,7 +17,7 @@ function buildShareTargetUrl(baseUrl: string, channel: ShareChannel): string {
     if (channel === 'x') return `https://x.com/intent/post?url=${encodeURIComponent(finalUrl)}&text=${encodeURIComponent(text)}`;
     if (channel === 'email') return `mailto:?subject=${encodeURIComponent('Join me on Polymatic')}&body=${encodeURIComponent(finalUrl)}`;
     if (channel === 'sms') return `sms:?&body=${encodeURIComponent(finalUrl)}`;
-    if (channel === 'discord') return finalUrl; // Discord has no web intent; open the link for manual paste
+    if (channel === 'discord') return finalUrl; // handled specially
     return finalUrl;
 }
 
@@ -35,23 +36,63 @@ export function ReferralsShareSheet({
         if (!safeUrl) return;
         try {
             await navigator.clipboard.writeText(safeUrl);
-            alert('Link copied');
-        } catch { }
+            toast({ type: 'success', description: 'Link copied' });
+            try {
+                await fetch('/api/analytics/referrals', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ event: 'referral_link_copied' }),
+                });
+            } catch { }
+        } catch {
+            toast({ type: 'error', description: 'Unable to copy' });
+        }
     };
 
     const openChannel = (channel: ShareChannel) => {
         if (!safeUrl) return;
-        const target = buildShareTargetUrl(safeUrl, channel);
-        if (channel === 'email' || channel === 'sms') {
-            window.location.href = target;
+        if (channel === 'discord') {
+            // Copy link then attempt to open Discord app; fall back to web
+            navigator.clipboard.writeText(safeUrl).catch(() => { });
+            toast({ type: 'success', description: 'Link copied — paste in Discord' });
+            try {
+                const deepLink = 'discord://-/channels/@me';
+                const opened = window.open(deepLink, '_blank');
+                // Fallback to web if blocked or not installed
+                setTimeout(() => {
+                    try {
+                        if (!opened || opened.closed) {
+                            window.open('https://discord.com/channels/@me', '_blank');
+                        }
+                    } catch {
+                        window.open('https://discord.com/channels/@me', '_blank');
+                    }
+                }, 500);
+            } catch {
+                window.open('https://discord.com/channels/@me', '_blank');
+            }
         } else {
-            window.open(target, '_blank');
+            const target = buildShareTargetUrl(safeUrl, channel);
+            if (channel === 'email' || channel === 'sms') {
+                window.location.href = target;
+            } else {
+                window.open(target, '_blank');
+            }
         }
+        // Analytics (best-effort)
+        fetch('/api/analytics/referrals', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ event: 'referral_shared', channel }),
+        }).catch(() => { });
     };
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <SheetContent side="bottom" className="px-4 pb-5">
+            <SheetContent
+                side="bottom"
+                className="px-4 pb-5 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-xl sm:rounded-xl sm:border sm:px-6 sm:py-5 sm:shadow-xl"
+            >
                 <SheetHeader>
                     <SheetTitle className="text-center">Share with friends</SheetTitle>
                 </SheetHeader>
