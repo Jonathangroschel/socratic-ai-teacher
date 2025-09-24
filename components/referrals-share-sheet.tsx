@@ -12,7 +12,7 @@ function buildShareTargetUrl(baseUrl: string, channel: ShareChannel): string {
     u.searchParams.set('utm_source', channel);
     const finalUrl = u.toString();
 
-    const text = 'Learn & earn 50k points on Polymatic';
+    const text = 'Try Polymatic and Get Paid to Learn';
     if (channel === 'reddit') return `https://www.reddit.com/submit?url=${encodeURIComponent(finalUrl)}&title=${encodeURIComponent(text)}`;
     if (channel === 'x') return `https://x.com/intent/post?url=${encodeURIComponent(finalUrl)}&text=${encodeURIComponent(text)}`;
     if (channel === 'email') return `mailto:?subject=${encodeURIComponent('Join me on Polymatic')}&body=${encodeURIComponent(finalUrl)}`;
