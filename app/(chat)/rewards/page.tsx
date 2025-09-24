@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RewardsBarChart } from '@/components/rewards-chart';
 import Link from 'next/link';
 import { ConnectWallet } from '@/components/wallet/connect-wallet';
+import { ReferralsShareSheet } from '@/components/referrals-share-sheet';
 import { referralsEnabled as referralsEnabledStatic } from '@/lib/constants';
 
 type SummaryResponse = {
@@ -30,6 +31,7 @@ export default function RewardsPage() {
   const { data: walletsData, mutate: mutateWallets } = useSWR<{ items: Array<any> }>(`/api/wallets`, fetcher);
 
   const [inviteState, setInviteState] = useState<{ url: string | null; loading: boolean; error: string | null }>({ url: null, loading: false, error: null });
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     const onChanged = () => mutateWallets();
@@ -185,7 +187,7 @@ export default function RewardsPage() {
                       {inviteState.url ? (
                         <>
                           <Button size="sm" className="h-9" onClick={() => copyToClipboard(inviteState.url!)}>Copy link</Button>
-                          <Button size="sm" variant="outline" className="h-9" onClick={() => openShare(inviteState.url!)}>Share…</Button>
+                          <Button size="sm" variant="outline" className="h-9" onClick={() => setShareOpen(true)}>Share…</Button>
                           <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'reddit')}>Share to Reddit</Button>
                           <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'x')}>Share to X</Button>
                           <Button size="sm" variant="ghost" className="h-9" onClick={() => openShare(inviteState.url!, 'discord')}>Share to Discord</Button>
@@ -215,6 +217,11 @@ export default function RewardsPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Share sheet */}
+      {referralsEnabled && (
+        <ReferralsShareSheet open={shareOpen} onOpenChange={setShareOpen} url={inviteState.url} />
       )}
 
       {/* Mobile: show an inline banner under cards */}
