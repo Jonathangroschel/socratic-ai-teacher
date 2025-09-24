@@ -47,6 +47,13 @@ export default function RewardsPage() {
   const formatNumber = (n: number) =>
     new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n);
 
+  // Pre-populate invite URL if server already has a code
+  useEffect(() => {
+    if (data?.url && !inviteState.url) {
+      setInviteState((s) => ({ ...s, url: data.url }));
+    }
+  }, [data?.url, inviteState.url]);
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
