@@ -60,6 +60,7 @@ export function Chat({
   const [messageCountThisSession, setMessageCountThisSession] = useState(0);
   const [showAccountNudge, setShowAccountNudge] = useState(false);
   const [todayRewardTotal, setTodayRewardTotal] = useState<number>(0);
+  const isGuestUser = session?.user?.type === 'guest';
 
   const {
     messages,
@@ -156,6 +157,8 @@ export function Chat({
   useEffect(() => {
     // Conditions: at least 2 user messages; not readonly; snooze rules
     if (isReadonly) return;
+    // Only show for guest users
+    if (!isGuestUser) return;
     if (messageCountThisSession < 2) return;
     // snooze key
     const last = localStorage.getItem('accountNudge:last');
@@ -168,7 +171,7 @@ export function Chat({
     // Don’t show while streaming
     if (status === 'streaming' || status === 'submitted') return;
     setShowAccountNudge(true);
-  }, [messageCountThisSession, isReadonly, status]);
+  }, [messageCountThisSession, isReadonly, status, isGuestUser]);
 
   return (
     <>
@@ -209,7 +212,7 @@ export function Chat({
               selectedVisibilityType={visibilityType}
               selectedModelId={initialChatModel}
               usage={usage}
-              nudge={showAccountNudge ? {
+              nudge={isGuestUser && showAccountNudge ? {
                 visible: true,
                 todayTotal: todayRewardTotal,
                 onClose: () => {
