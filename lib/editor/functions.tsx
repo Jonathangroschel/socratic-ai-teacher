@@ -8,7 +8,6 @@ import { renderToString } from 'react-dom/server';
 import { Response } from '@/components/elements/response';
 
 import { documentSchema } from './config';
-import { createSuggestionWidget, type UISuggestion } from './suggestions';
 
 export const buildDocumentFromContent = (content: string) => {
   const parser = DOMParser.fromSchema(documentSchema);
@@ -20,6 +19,13 @@ export const buildDocumentFromContent = (content: string) => {
 
 export const buildContentFromDocument = (document: Node) => {
   return defaultMarkdownSerializer.serialize(document);
+};
+
+// Define a minimal type here to keep the API self-contained after removing suggestions.tsx
+export type UISuggestion = {
+  id: string;
+  selectionStart: number;
+  selectionEnd: number;
 };
 
 export const createDecorations = (
@@ -43,19 +49,7 @@ export const createDecorations = (
       ),
     );
 
-    decorations.push(
-      Decoration.widget(
-        suggestion.selectionStart,
-        (view) => {
-          const { dom } = createSuggestionWidget(suggestion, view);
-          return dom;
-        },
-        {
-          suggestionId: suggestion.id,
-          type: 'widget',
-        },
-      ),
-    );
+    // Widget creation removed (suggestions UI was deleted). Keep highlight only.
   }
 
   return DecorationSet.create(view.state.doc, decorations);
