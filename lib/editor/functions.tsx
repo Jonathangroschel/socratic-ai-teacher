@@ -9,12 +9,6 @@ import { Response } from '@/components/elements/response';
 
 import { documentSchema } from './config';
 
-export type UISuggestion = {
-  id: string;
-  selectionStart: number;
-  selectionEnd: number;
-};
-
 export const buildDocumentFromContent = (content: string) => {
   const parser = DOMParser.fromSchema(documentSchema);
   const stringFromMarkdown = renderToString(<Response>{content}</Response>);
@@ -25,6 +19,12 @@ export const buildDocumentFromContent = (content: string) => {
 
 export const buildContentFromDocument = (document: Node) => {
   return defaultMarkdownSerializer.serialize(document);
+};
+
+export type UISuggestion = {
+  id: string;
+  selectionStart: number;
+  selectionEnd: number;
 };
 
 export const createDecorations = (
@@ -47,6 +47,7 @@ export const createDecorations = (
         },
       ),
     );
+    // Widget creation removed (suggestions UI was deleted). Keep highlight only.
   }
 
   return DecorationSet.create(view.state.doc, decorations);
