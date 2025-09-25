@@ -8,7 +8,12 @@ import { renderToString } from 'react-dom/server';
 import { Response } from '@/components/elements/response';
 
 import { documentSchema } from './config';
-import { createSuggestionWidget, type UISuggestion } from './suggestions';
+
+export type UISuggestion = {
+  id: string;
+  selectionStart: number;
+  selectionEnd: number;
+};
 
 export const buildDocumentFromContent = (content: string) => {
   const parser = DOMParser.fromSchema(documentSchema);
@@ -39,20 +44,6 @@ export const createDecorations = (
         {
           suggestionId: suggestion.id,
           type: 'highlight',
-        },
-      ),
-    );
-
-    decorations.push(
-      Decoration.widget(
-        suggestion.selectionStart,
-        (view) => {
-          const { dom } = createSuggestionWidget(suggestion, view);
-          return dom;
-        },
-        {
-          suggestionId: suggestion.id,
-          type: 'widget',
         },
       ),
     );
