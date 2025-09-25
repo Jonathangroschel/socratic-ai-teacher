@@ -7,6 +7,7 @@ import {
   stepCountIs,
   streamText,
 } from 'ai';
+import type { FilePart, ModelMessage } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
@@ -62,6 +63,34 @@ export function getStreamContext() {
   }
 
   return globalStreamContext;
+}
+
+async function createPdfFileMessagesFromUiMessage(
+  uiMessage: ChatMessage,
+): Promise<Array<ModelMessage>> {
+  const fileParts: Array<FilePart> = [];
+
+  for (const p of uiMessage.parts as any[]) {
+    if (p?.type === 'file' && (p.mediaType === 'application/pdf' || p.mimeType === 'application/pdf') && p.url) {
+      try {
+        const res = await fetch(p.url as string);
+        if (res.ok) {
+          const arrayBuffer = await res.arrayBuffer();
+          const part: FilePart = {
+            type: 'file',
+            data: arrayBuffer,
+            mediaType: 'application/pdf',
+          };
+          fileParts.push(part);
+        }
+      } catch (_) {
+        // ignore this file if fetching fails
+      }
+    }
+  }
+
+  if (fileParts.length === 0) return [];
+  return [{ role: 'user', content: fileParts }];
 }
 
 export async function POST(request: Request) {
@@ -127,6 +156,8 @@ export async function POST(request: Request) {
 
     const messagesFromDb = await getMessagesByChatId({ id });
     const uiMessages = [...convertToUIMessages(messagesFromDb), message];
+    const baseModelMessages = convertToModelMessages(uiMessages);
+    const extraPdfMessages = await createPdfFileMessagesFromUiMessage(message);
 
     const { longitude, latitude, city, country } = geolocation(request);
     // Prefer Vercel-provided timezone header, then client-provided, else null
@@ -229,7 +260,7 @@ export async function POST(request: Request) {
           model: myProvider.languageModel(selectedChatModel),
           temperature: 0.7,
           system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.\n\nAnti-repeat policy: From 'Recent learning memory', extract 'Completed topics' and avoid repeating the exact same topic in the next 3 sessions or 7 days. If the user explicitly requests a repeat or it's due for spaced review, change the depth/focus (advance the topic) rather than reusing the same plan.\n\nReview policy: If no 'Recent learning memory' block is present or it contains no prior concepts, OMIT the Review segment (do not invent review cards). Do not output placeholder text such as 'No review cards due today'. If Review is omitted, replace it with either: (a) an extra Applied task (4–5 min) tied to today's topic, or (b) a quick thought exercise (≤2 min) to apply today's concept. Only include Review if specific prior concepts are present or the user explicitly asks for review.`,
-          messages: convertToModelMessages(uiMessages),
+          messages: [...baseModelMessages, ...extraPdfMessages],
           stopWhen: stepCountIs(5),
           experimental_activeTools: [],
           experimental_transform: smoothStream({ chunking: 'word' }),
