@@ -7,11 +7,9 @@ import useSWR, { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
 import type { Vote } from '@/lib/db/schema';
 import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
-import { Artifact } from './artifact';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
 import type { VisibilityType } from './visibility-selector';
-import { useArtifactSelector } from '@/hooks/use-artifact';
 import { unstable_serialize } from 'swr/infinite';
 import { getChatHistoryPaginationKey } from './sidebar-history';
 import { toast } from './toast';
@@ -143,7 +141,6 @@ export function Chat({
   );
 
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-  const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
   useAutoResume({
     autoResume,
@@ -195,7 +192,6 @@ export function Chat({
           setMessages={setMessages}
           regenerate={regenerate}
           isReadonly={isReadonly}
-          isArtifactVisible={isArtifactVisible}
           selectedModelId={initialChatModel}
           isReturningVisitor={isReturningVisitor}
         />
@@ -229,23 +225,7 @@ export function Chat({
         </div>
       </div>
 
-      <Artifact
-        chatId={id}
-        input={input}
-        setInput={setInput}
-        status={status}
-        stop={stop}
-        attachments={attachments}
-        setAttachments={setAttachments}
-        sendMessage={sendMessage}
-        messages={messages}
-        setMessages={setMessages}
-        regenerate={regenerate}
-        votes={votes}
-        isReadonly={isReadonly}
-        selectedVisibilityType={visibilityType}
-        selectedModelId={initialChatModel}
-      />
+      {/* Artifact UI removed */}
     </>
   );
 }

@@ -22,9 +22,6 @@ import {
 } from '@/lib/db/queries';
 import { convertToUIMessages, generateUUID } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
-import { createDocument } from '@/lib/ai/tools/create-document';
-import { updateDocument } from '@/lib/ai/tools/update-document';
-import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
@@ -234,23 +231,9 @@ export async function POST(request: Request) {
           system: `${systemPrompt({ selectedChatModel, requestHints, profile })}${memoryBlock}\n\nMemory policy: Only remember content relevant to the student's learning journey (skills, concepts mastered/struggled with, misconceptions, goals, time budget, level, next steps). Do not store unrelated personal details.\n\nAnti-repeat policy: From 'Recent learning memory', extract 'Completed topics' and avoid repeating the exact same topic in the next 3 sessions or 7 days. If the user explicitly requests a repeat or it's due for spaced review, change the depth/focus (advance the topic) rather than reusing the same plan.\n\nReview policy: If no 'Recent learning memory' block is present or it contains no prior concepts, OMIT the Review segment (do not invent review cards). Do not output placeholder text such as 'No review cards due today'. If Review is omitted, replace it with either: (a) an extra Applied task (4–5 min) tied to today's topic, or (b) a quick thought exercise (≤2 min) to apply today's concept. Only include Review if specific prior concepts are present or the user explicitly asks for review.`,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
-          experimental_activeTools:
-            selectedChatModel === 'chat-model-reasoning'
-              ? []
-              : [
-                'createDocument',
-                'updateDocument',
-                'requestSuggestions',
-              ],
+          experimental_activeTools: [],
           experimental_transform: smoothStream({ chunking: 'word' }),
-          tools: {
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
-          },
+          tools: {},
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: 'stream-text',

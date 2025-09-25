@@ -9,7 +9,6 @@ import { isTestEnvironment } from '../constants';
 export const myProvider = isTestEnvironment
   ? (() => {
     const {
-      artifactModel,
       chatModel,
       reasoningModel,
       titleModel,
@@ -19,7 +18,6 @@ export const myProvider = isTestEnvironment
         'chat-model': chatModel,
         'chat-model-reasoning': reasoningModel,
         'title-model': titleModel,
-        'artifact-model': artifactModel,
         'reward-model': chatModel,
       },
     });
@@ -32,7 +30,6 @@ export const myProvider = isTestEnvironment
         middleware: extractReasoningMiddleware({ tagName: 'think' }),
       }),
       'title-model': gateway.languageModel('openai/gpt-4.1'),
-      'artifact-model': gateway.languageModel('openai/gpt-4.1'),
       // Rewards: cost-efficient scorer
       'reward-model': gateway.languageModel('openai/gpt-4o-mini'),
     },

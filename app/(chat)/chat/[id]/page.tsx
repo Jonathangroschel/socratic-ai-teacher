@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/app/(auth)/auth';
 import { Chat } from '@/components/chat';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
-import { DataStreamHandler } from '@/components/data-stream-handler';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 import { convertToUIMessages } from '@/lib/utils';
 import { LanguageModelV2Usage } from '@ai-sdk/provider';
@@ -62,7 +61,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           initialLastContext={chat.lastContext ?? undefined}
           isReturningVisitor={isReturningVisitor}
         />
-        <DataStreamHandler />
+        {/* DataStreamHandler removed */}
       </>
     );
   }
@@ -80,7 +79,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
         initialLastContext={chat.lastContext ?? undefined}
         isReturningVisitor={isReturningVisitor}
       />
-      <DataStreamHandler />
+      {/* DataStreamHandler removed */}
     </>
   );
 }

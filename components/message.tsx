@@ -2,7 +2,6 @@
 import { motion } from 'framer-motion';
 import { memo, useState } from 'react';
 import type { Vote } from '@/lib/db/schema';
-import { DocumentToolResult } from './document';
 import { SparklesIcon } from './icons';
 import { Response } from './elements/response';
 import { MessageContent } from './elements/message';
@@ -19,7 +18,7 @@ import { Weather } from './weather';
 import equal from 'fast-deep-equal';
 import { cn, sanitizeText } from '@/lib/utils';
 import { MessageEditor } from './message-editor';
-import { DocumentPreview } from './document-preview';
+// Artifact/document preview components removed
 import { MessageReasoning } from './message-reasoning';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import type { ChatMessage } from '@/lib/types';
@@ -34,7 +33,6 @@ const PurePreviewMessage = ({
   regenerate,
   isReadonly,
   requiresScrollPadding,
-  isArtifactVisible,
 }: {
   chatId: string;
   message: ChatMessage;
@@ -44,7 +42,6 @@ const PurePreviewMessage = ({
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
-  isArtifactVisible: boolean;
 }) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
@@ -188,86 +185,7 @@ const PurePreviewMessage = ({
               );
             }
 
-            if (type === 'tool-createDocument') {
-              const { toolCallId } = part;
-
-              if (part.output && 'error' in part.output) {
-                return (
-                  <div
-                    key={toolCallId}
-                    className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/50"
-                  >
-                    Error creating document: {String(part.output.error)}
-                  </div>
-                );
-              }
-
-              return (
-                <DocumentPreview
-                  key={toolCallId}
-                  isReadonly={isReadonly}
-                  result={part.output}
-                />
-              );
-            }
-
-            if (type === 'tool-updateDocument') {
-              const { toolCallId } = part;
-
-              if (part.output && 'error' in part.output) {
-                return (
-                  <div
-                    key={toolCallId}
-                    className="p-4 text-red-500 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950/50"
-                  >
-                    Error updating document: {String(part.output.error)}
-                  </div>
-                );
-              }
-
-              return (
-                <div key={toolCallId} className="relative">
-                  <DocumentPreview
-                    isReadonly={isReadonly}
-                    result={part.output}
-                    args={{ ...part.output, isUpdate: true }}
-                  />
-                </div>
-              );
-            }
-
-            if (type === 'tool-requestSuggestions') {
-              const { toolCallId, state } = part;
-
-              return (
-                <Tool key={toolCallId} defaultOpen={true}>
-                  <ToolHeader type="tool-requestSuggestions" state={state} />
-                  <ToolContent>
-                    {state === 'input-available' && (
-                      <ToolInput input={part.input} />
-                    )}
-                    {state === 'output-available' && (
-                      <ToolOutput
-                        output={
-                          'error' in part.output ? (
-                            <div className="p-2 text-red-500 rounded border">
-                              Error: {String(part.output.error)}
-                            </div>
-                          ) : (
-                            <DocumentToolResult
-                              type="request-suggestions"
-                              result={part.output}
-                              isReadonly={isReadonly}
-                            />
-                          )
-                        }
-                        errorText={undefined}
-                      />
-                    )}
-                  </ToolContent>
-                </Tool>
-              );
-            }
+            // All artifact tool parts removed
           })}
 
           {!isReadonly && (

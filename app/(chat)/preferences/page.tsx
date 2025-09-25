@@ -40,6 +40,12 @@ export default function PreferencesPage() {
         }
       } catch { }
     })();
+    return () => {
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+    };
   }, []);
 
   function scheduleSave() {
