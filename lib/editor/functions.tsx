@@ -21,7 +21,6 @@ export const buildContentFromDocument = (document: Node) => {
   return defaultMarkdownSerializer.serialize(document);
 };
 
-// Define a minimal type here to keep the API self-contained after removing suggestions.tsx
 export type UISuggestion = {
   id: string;
   selectionStart: number;
@@ -48,7 +47,6 @@ export const createDecorations = (
         },
       ),
     );
-
     // Widget creation removed (suggestions UI was deleted). Keep highlight only.
   }
 
