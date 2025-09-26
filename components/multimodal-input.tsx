@@ -9,6 +9,7 @@ import {
   type Dispatch,
   type SetStateAction,
   type ChangeEvent,
+  type DragEvent,
   memo,
   useMemo,
 } from 'react';
@@ -124,6 +125,12 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  const allowedMimeTypes = useMemo(
+    () => ['image/jpeg', 'image/png', 'application/pdf'],
+    [],
+  );
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
@@ -190,31 +197,72 @@ function PureMultimodalInput({
     }
   };
 
+  const processFiles = useCallback(
+    async (files: Array<File>) => {
+      const filtered = files.filter((f) =>
+        allowedMimeTypes.includes(f.type),
+      );
+      if (filtered.length === 0) return;
 
-  const handleFileChange = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-
-      setUploadQueue(files.map((file) => file.name));
+      setUploadQueue(filtered.map((file) => file.name));
 
       try {
-        const uploadPromises = files.map((file) => uploadFile(file));
-        const uploadedAttachments = await Promise.all(uploadPromises);
-        const successfullyUploadedAttachments = uploadedAttachments.filter(
-          (attachment) => attachment !== undefined,
-        );
-
-        setAttachments((currentAttachments) => [
-          ...currentAttachments,
-          ...successfullyUploadedAttachments,
-        ]);
+        const uploaded = await Promise.all(filtered.map((file) => uploadFile(file)));
+        const ok = uploaded.filter((a) => a !== undefined) as Array<{
+          url: string;
+          name: string;
+          contentType: string;
+        }>;
+        if (ok.length > 0) {
+          setAttachments((current) => [...current, ...ok]);
+        }
       } catch (error) {
         console.error('Error uploading files!', error);
       } finally {
         setUploadQueue([]);
       }
     },
-    [setAttachments],
+    [allowedMimeTypes, setAttachments],
+  );
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      processFiles(files);
+    },
+    [processFiles],
+  );
+
+  const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(true);
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
+
+  const handleDragEnter = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragActive(false);
+      const files = Array.from(event.dataTransfer?.files || []);
+      processFiles(files);
+    },
+    [processFiles],
   );
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
@@ -226,7 +274,18 @@ function PureMultimodalInput({
   }, [status, scrollToBottom]);
 
   return (
-    <div className="flex relative flex-col gap-4 w-full">
+    <div
+      className="flex relative flex-col gap-4 w-full"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragActive && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-xl border-2 border-dashed border-primary/50 bg-background/70 backdrop-blur-sm">
+          <div className="text-sm text-muted-foreground">Drop files to upload (JPEG, PNG, PDF)</div>
+        </div>
+      )}
       <AnimatePresence>
         {!isAtBottom && (
           <motion.div
