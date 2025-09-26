@@ -365,7 +365,7 @@ export async function POST(request: Request) {
             assistantText,
             timeZone,
           });
-          if (reward && reward.delta && reward.delta > 0) {
+          if (reward) {
             try {
               uiWriter?.write?.({
                 type: 'data-reward',
@@ -373,6 +373,9 @@ export async function POST(request: Request) {
                   delta: reward.delta,
                   todayTotal: reward.todayTotal,
                   lifetimeTotal: reward.lifetimeTotal,
+                  cap: reward.cap,
+                  min: reward.min,
+                  max: reward.max,
                 },
               });
             } catch { }
