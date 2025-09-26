@@ -53,8 +53,9 @@ export function RewardsBadge() {
         const t = setTimeout(() => setBump(false), 450);
         return () => clearTimeout(t);
       } else if (part.type === 'data-usage') {
-        // Fallback: after every assistant finish, refresh summary once
-        (async () => {
+        // Fallback: after model finish, refresh summary with a slight delay
+        // to avoid racing the server-side award write. Also retry once.
+        const fetchSummary = async () => {
           try {
             const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
             const res = await fetch(`/api/rewards/summary?tz=${encodeURIComponent(tz)}`, { cache: 'no-store' });
@@ -63,7 +64,13 @@ export function RewardsBadge() {
               if (typeof json?.today === 'number') setTodayTotal(json.today);
             }
           } catch { }
-        })();
+        };
+        const t1 = setTimeout(fetchSummary, 500);
+        const t2 = setTimeout(fetchSummary, 2000);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
       }
     });
   }, [dataStream]);

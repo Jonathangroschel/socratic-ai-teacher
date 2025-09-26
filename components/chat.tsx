@@ -107,6 +107,22 @@ export function Chat({
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
+      // Ensure rewards badge reflects the latest DB state after server-side evaluation.
+      (async () => {
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          const res = await fetch(`/api/rewards/summary?tz=${encodeURIComponent(tz)}`, { cache: 'no-store' });
+          if (!res.ok) return;
+          const json = await res.json();
+          if (typeof json?.today === 'number') {
+            setTodayRewardTotal(json.today);
+            setDataStream((ds) => [
+              ...(ds ?? []),
+              { type: 'data-reward', data: { delta: 0, todayTotal: json.today } } as any,
+            ]);
+          }
+        } catch { }
+      })();
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
